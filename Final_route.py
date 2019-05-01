@@ -10,6 +10,8 @@ import optparse
 
 app = Flask(__name__)
 
+CURRENT_CITY = 'Baltimore'
+
 
 # Helper class to convert a DynamoDB item to JSON.
 class ResultCode:
@@ -32,24 +34,24 @@ def final_route():
 
 # enter the time windows of all the clients here with the first one as the base time for all
 def time_arr():
-    time =[("01:00 PM", "01:00 PM"),   # departure time
-         ("02:15 PM", "02:25 PM"),
-         ("02:15 PM", "02:25 PM"),
-         ("02:00 PM", "02:10 PM"),
-         ("01:45 PM", "01:55 PM"),
-         ("01:00 PM", "01:08 PM"),
-         ("01:50 PM", "02:00 PM"),
-         ("01:00 PM", "01:10 PM"),
-         ("01:10 PM", "01:20 PM"),
-         ("01:00 PM", "01:10 PM"),
-         ("02:15 PM", "02:50 PM"),
-         ("02:25 PM", "03:30 PM"),
-         ("01:05 PM", "03:15 PM"),
-         ("01:15 PM", "03:25 PM"),
-         ("01:10 PM", "03:20 PM"),
-         ("01:45 PM", "03:55 PM"),
-         ("01:30 PM", "03:20 PM"),
-         ("01:00 PM", "04:20 PM")]
+    time = [("01:00 PM", "01:00 PM"),   # departure time
+            ("02:15 PM", "02:25 PM"),
+            ("02:15 PM", "02:25 PM"),
+            ("02:00 PM", "02:10 PM"),
+            ("01:45 PM", "01:55 PM"),
+            ("01:00 PM", "01:08 PM"),
+            ("01:50 PM", "02:00 PM"),
+            ("01:00 PM", "01:10 PM"),
+            ("01:10 PM", "01:20 PM"),
+            ("01:00 PM", "01:10 PM"),
+            ("02:15 PM", "02:50 PM"),
+            ("02:25 PM", "03:30 PM"),
+            ("01:05 PM", "03:15 PM"),
+            ("01:15 PM", "03:25 PM"),
+            ("01:10 PM", "03:20 PM"),
+            ("01:45 PM", "03:55 PM"),
+            ("01:30 PM", "03:20 PM"),
+            ("01:00 PM", "04:20 PM")]
 
     time = conv_time(time)
 
@@ -58,42 +60,52 @@ def time_arr():
 
 def data_arr():
     # Array of locations (lat, lng)
-    locations =[(39.290440, -76.612330),   # depot
-              (39.348230, -76.732660),
-              (39.320510, -76.724570),
-              (39.353790, -76.758400),
-              (39.348230, -76.732660),
-              (39.658420, -77.175440),
-              (39.587240, -76.993040),
-              (39.383070, -76.763020),
-              (39.290440, -76.612330),
-              (39.391320, -76.733710),
-              (39.321000, -76.516160),
-              (39.589700, -76.995910),
-              (39.153780, -76.610510),
-              (39.245270, -76.661030),
-              (39.254990, -76.657526),
-              (39.261411, -76.6968749),
-              (39.284484, -76.7144821),
-              (39.290409, -76.7495943)]
+    locations = [(39.290440, -76.612330),   # depot
+                 (39.348230, -76.732660),
+                 (39.320510, -76.724570),
+                 (39.353790, -76.758400),
+                 (39.348230, -76.732660),
+                 (39.658420, -77.175440),
+                 (39.587240, -76.993040),
+                 (39.383070, -76.763020),
+                 (39.290440, -76.612330),
+                 (39.391320, -76.733710),
+                 (39.321000, -76.516160),
+                 (39.589700, -76.995910),
+                 (39.153780, -76.610510),
+                 (39.245270, -76.661030),
+                 (39.254990, -76.657526),
+                 (39.261411, -76.6968749),
+                 (39.284484, -76.7144821),
+                 (39.290409, -76.7495943)]
 
     return locations
 
 
 # function for pickup and delivery
 # dest_arr is the index of locations in the locations array that need cold items delivered
-# max_deliver_time is the max time between picking up the cold item and delivering it to a customer  
+# max_delivery_seconds is the max time between picking up the cold item and delivering it to a customer
 def pickup_deliver(gclient,
                    locations,
                    time_windows):
     
-    shops_arr = ["price rite", "shoppers", "safeway", "wegmans", "acme markets", "walmart", "7-Eleven",
-                 "Target", "Save A Lot", "Walmart Supercenter"]
+    shops_arr = [
+        CURRENT_CITY + "price rite",
+        CURRENT_CITY + "shoppers",
+        CURRENT_CITY + "safeway",
+        CURRENT_CITY + "wegmans",
+        CURRENT_CITY + "acme markets",
+        CURRENT_CITY + "walmart",
+        CURRENT_CITY + "7-Eleven",
+        CURRENT_CITY + "Target",
+        CURRENT_CITY + "Save A Lot",
+        CURRENT_CITY + "Walmart Supercenter"
+    ]
     dest_arr = [2, 3, 6, 7, 8, 4]
-    max_delivery_time = 60
+    max_delivery_seconds = 60 * 60
     
     loc_length = len(locations)
-    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, max_delivery_time)
+    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, max_delivery_seconds)
     if not result.is_successful:
         return result
 
@@ -120,6 +132,7 @@ def create_data_model():
     data["time_windows"] = time_arr()
     print("pickup_deliver starts...")
     result = pickup_deliver(gclient, data['locations'], data['time_windows'])
+
     if not result.is_successful:
         return result
     data['pickups_deliveries'] = result.body
@@ -141,7 +154,8 @@ def create_data_model():
     data['num_vehicles'] = 4
     data['depot'] = 0
     print("data ready")
-    return data
+
+    return ResultCode(True, data)
 
 
 # ******************************************************************************************
@@ -160,7 +174,7 @@ def conv_time(time_arr):
 
 def convert_to_24(datestr): 
     if datestr[-2:] == "AM" and datestr[:2] == "12": 
-        return  int(datestr[3:6]) 
+        return int(datestr[3:6])
           
     # remove the AM     
     elif datestr[-2:] == "AM": 
@@ -310,7 +324,7 @@ def one_hour(gclient,
              time_windows,
              shops_arr,
              dest_arr,
-             max_delivery_time):
+             max_delivery_seconds):
   
     # calculate the closest shop to index i
     # append the shop's coords to array of distances
@@ -318,23 +332,31 @@ def one_hour(gclient,
     least_dist = 10000000000
     for i in dest_arr:
         dest = locations[i]
+        print("check destination: {}".format(dest))
         for shop in shops_arr:
             result = one_hour_dist(gclient, shop, dest)
-            if not result.is_successful:
-                return result
+            # if not result.is_successful:
+            #     return result
             dist, address, dur = result.body
-            # print(dist,address,dur,shop)
+            print("  check shop: {}\n    distance: {},\n    address: {},\n    duration: {}".format(shop, dist, address, dur))
             if least_dist > dist:
                 least_dist = dist
                 closest = address
                 duration = dur
+
+        print('closets is {}, distance: {}, duration: {}'.format(closest, least_dist, duration))
         coords = gclient.geocode(closest)
-        y_coor = (coords[0]['geometry']['bounds']['northeast']['lng'] + coords[0]['geometry']['bounds']['southwest']['lng'])/2
-        x_coor = (coords[0]['geometry']['bounds']['northeast']['lat'] + coords[0]['geometry']['bounds']['southwest']['lat'])/2
-        if duration > max_delivery_time:
+
+        y_coor = (coords[0]['geometry']['viewport']['northeast']['lng'] +
+                  coords[0]['geometry']['viewport']['southwest']['lng']) / 2
+
+        x_coor = (coords[0]['geometry']['viewport']['northeast']['lat'] +
+                  coords[0]['geometry']['viewport']['southwest']['lat']) / 2
+
+        if duration > max_delivery_seconds:
             returned_message = "closest shop is more than {} away " \
                                "from client =>: {} mins, address: {} " \
-                               "destination: {}".format(max_delivery_time, duration, closest, dest)
+                               "destination: {}".format(max_delivery_seconds, duration, closest, dest)
             print(returned_message)
             # exit()
             result = ResultCode(False, returned_message)
@@ -342,11 +364,13 @@ def one_hour(gclient,
         # expand shop time such that the upper bound on the shop time is location's lower bound -
         # time between them and shop's lower bound is shop upper bound - one hour
         upper_bound = (time_windows[i][0] + time_windows[i][1])/2
-        lower_bound = upper_bound - max_delivery_time
+        lower_bound = upper_bound - int(max_delivery_seconds / 60)
+        upper_bound = int(upper_bound)
+        lower_bound = int(lower_bound)
         # upper_bound and lower bound should be related to time of delivery not location's lower bound
 
         time_windows.append((lower_bound, upper_bound))
-        locations.append((x_coor,y_coor))
+        locations.append((x_coor, y_coor))
 
     return ResultCode(True)
 
@@ -359,7 +383,7 @@ def gmaps_speed(gclient, x1, y1,
                          x2, y2):
     # speed = gclient.snapped_speed_limits([(x1, y1),(x2, y2)])
     # print("gmaps speed arr = ",speed)
-    speed = randint(60,100)
+    speed = randint(60, 100)
     return speed
 
 
@@ -408,15 +432,15 @@ def print_solution(data, manager, routing, assignment):
 def create_data_model_d():
     data = {}
     data['locations'] = \
-                [(4, 4),  # depot
-                 (2, 0), (8, 0),  # locations to visit
-                 (0, 1), (1, 1),
-                 (5, 2), (7, 2),
-                 (3, 3), (6, 3),
-                 (5, 5), (8, 5),
-                 (1, 6), (2, 6),
-                 (3, 7), (6, 7),
-                 (0, 8), (7, 8),]
+        [(4, 4),  # depot
+         (2, 0), (8, 0),  # locations to visit
+         (0, 1), (1, 1),
+         (5, 2), (7, 2),
+         (3, 3), (6, 3),
+         (5, 5), (8, 5),
+         (1, 6), (2, 6),
+         (3, 7), (6, 7),
+         (0, 8), (7, 8)]
     data['distance_matrix'] = [
         [
             0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354,
@@ -498,7 +522,7 @@ def create_data_model_d():
         [13, 12],
         [16, 14],
     ]
-    data["time_windows"]= [
+    data["time_windows"] = [
             (0, 50),  # depot
             (7, 120),  # 1
             (10, 150),  # 2
@@ -529,7 +553,8 @@ def create_data_model_d():
     # [END pickups_deliveries]
     data['num_vehicles'] = 4
     data['depot'] = 0
-    return data
+
+    return ResultCode(True, data)
 
 
 def check():
@@ -537,10 +562,14 @@ def check():
 
 
 def main():
+    print("create data model")
     result = create_data_model()
+    # result = create_data_model_d()
     if not result.is_successful:
         return result.body
     data = result.body
+
+    print(data)
 
     manager = pywrapcp.RoutingIndexManager(
         len(data['distance_matrix']), data['num_vehicles'], data['depot'])
@@ -583,42 +612,46 @@ def main():
     distance_dimension = routing.GetDimensionOrDie(dimension_name)
     distance_dimension.SetGlobalSpanCostCoefficient(100)
     for request in data['pickups_deliveries']:
-            pickup_index = manager.NodeToIndex(request[0])
-            delivery_index = manager.NodeToIndex(request[1])
-            routing.AddPickupAndDelivery(pickup_index, delivery_index)
-            routing.solver().Add(
-                routing.VehicleVar(pickup_index) == routing.VehicleVar(
-                    delivery_index))
-            routing.solver().Add(
-                distance_dimension.CumulVar(pickup_index) <=
-                distance_dimension.CumulVar(delivery_index))
+        pickup_index = manager.NodeToIndex(request[0])
+        delivery_index = manager.NodeToIndex(request[1])
+        routing.AddPickupAndDelivery(pickup_index, delivery_index)
+        routing.solver().Add(
+            routing.VehicleVar(pickup_index) == routing.VehicleVar(
+                delivery_index))
+        routing.solver().Add(
+            distance_dimension.CumulVar(pickup_index) <=
+            distance_dimension.CumulVar(delivery_index))
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.FIFO)
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.LIFO)
     time = 'Time'
     routing.AddDimension(time_callback_index, 30, 30, False, time)
     time_dimension = routing.GetDimensionOrDie(time)
     for location_idx, time_window in enumerate(data['time_windows']):
-            if location_idx == 0:
-                continue
-            index = manager.NodeToIndex(location_idx)
-            time_dimension.CumulVar(index).SetRange(time_window[0],
-                                                    time_window[1])
-            routing.AddToAssignment(time_dimension.SlackVar(index))
+        if location_idx == 0:
+            continue
+        index = manager.NodeToIndex(location_idx)
+        # time_dimension.CumulVar(index).SetRange(time_window[0],
+        #                                         time_window[1])
+
+        routing.solver().Add(time_dimension.CumulVar(index) >= time_window[0])
+        routing.solver().Add(time_dimension.CumulVar(index) <= time_window[1])
+
+        routing.AddToAssignment(time_dimension.SlackVar(index))
     # Add time window constraints for each vehicle start node and 'copy' the
     # slack var in the solution object (aka Assignment) to print it.
     for vehicle_id in range(data['num_vehicles']):
-            index = routing.Start(vehicle_id)
-            time_window = data['time_windows'][0]
-            time_dimension.CumulVar(index).SetRange(time_window[0],
-                                                    time_window[1])
-            routing.AddToAssignment(time_dimension.SlackVar(index))
+        index = routing.Start(vehicle_id)
+        time_window = data['time_windows'][0]
+        time_dimension.CumulVar(index).SetRange(time_window[0],
+                                                time_window[1])
+        routing.AddToAssignment(time_dimension.SlackVar(index))
 
     # Instantiate route start and end times to produce feasible times.
     for vehicle_id in range(data['num_vehicles']):
-            routing.AddVariableMinimizedByFinalizer(
-                time_dimension.CumulVar(routing.End(vehicle_id)))
-            routing.AddVariableMinimizedByFinalizer(
-                time_dimension.CumulVar(routing.Start(vehicle_id)))
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.End(vehicle_id)))
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.Start(vehicle_id)))
 
     # Setting first solution heuristic (cheapest addition).
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
