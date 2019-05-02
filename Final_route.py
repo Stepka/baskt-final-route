@@ -7,6 +7,7 @@ from random import randint
 from flask import Flask
 import sys
 import optparse
+from datetime import timedelta
 
 app = Flask(__name__)
 
@@ -34,26 +35,51 @@ def final_route():
 
 # enter the time windows of all the clients here with the first one as the base time for all
 def time_arr():
-    time = [("01:00 PM", "01:00 PM"),   # departure time
-            ("02:15 PM", "02:25 PM"),
-            ("02:15 PM", "02:25 PM"),
-            ("02:00 PM", "02:10 PM"),
-            ("01:45 PM", "01:55 PM"),
-            ("01:00 PM", "01:08 PM"),
-            ("01:50 PM", "02:00 PM"),
-            ("01:00 PM", "01:10 PM"),
-            ("01:10 PM", "01:20 PM"),
-            ("01:00 PM", "01:10 PM"),
-            ("02:15 PM", "02:50 PM"),
-            ("02:25 PM", "03:30 PM"),
-            ("01:05 PM", "03:15 PM"),
-            ("01:15 PM", "03:25 PM"),
-            ("01:10 PM", "03:20 PM"),
-            ("01:45 PM", "03:55 PM"),
-            ("01:30 PM", "03:20 PM"),
-            ("01:00 PM", "04:20 PM")]
+    time = [
+        ("01:00 PM", "01:00 PM"),   # departure time
+        ("02:15 PM", "02:25 PM"),
+        ("02:15 PM", "02:25 PM"),
+        ("02:00 PM", "02:10 PM"),
+        ("01:45 PM", "01:55 PM"),
+        ("01:00 PM", "01:08 PM"),
+        # ("01:50 PM", "02:00 PM"),
+        # ("01:00 PM", "01:10 PM"),
+        # ("01:10 PM", "01:20 PM"),
+        # ("01:00 PM", "01:10 PM"),
+        # ("02:15 PM", "02:50 PM"),
+        # ("02:25 PM", "03:30 PM"),
+        # ("01:05 PM", "03:15 PM"),
+        # ("01:15 PM", "03:25 PM"),
+        # ("01:10 PM", "03:20 PM"),
+        # ("01:45 PM", "03:55 PM"),
+        # ("01:30 PM", "03:20 PM"),
+        # ("01:00 PM", "04:20 PM")
+    ]
+
+    # time = [
+    #     ("00:00 PM", "10:00 PM"),   # departure time
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ("00:00 PM", "10:00 PM"),
+    #     ]
 
     time = conv_time(time)
+
+    print(time)
 
     return time
 
@@ -66,18 +92,19 @@ def data_arr():
                  (39.353790, -76.758400),
                  (39.348230, -76.732660),
                  (39.658420, -77.175440),
-                 (39.587240, -76.993040),
-                 (39.383070, -76.763020),
-                 (39.290440, -76.612330),
-                 (39.391320, -76.733710),
-                 (39.321000, -76.516160),
-                 (39.589700, -76.995910),
-                 (39.153780, -76.610510),
-                 (39.245270, -76.661030),
-                 (39.254990, -76.657526),
-                 (39.261411, -76.6968749),
-                 (39.284484, -76.7144821),
-                 (39.290409, -76.7495943)]
+                 # (39.587240, -76.993040),
+                 # (39.383070, -76.763020),
+                 # (39.290440, -76.612330),
+                 # (39.391320, -76.733710),
+                 # (39.321000, -76.516160),
+                 # (39.589700, -76.995910),
+                 # (39.153780, -76.610510),
+                 # (39.245270, -76.661030),
+                 # (39.254990, -76.657526),
+                 # (39.261411, -76.6968749),
+                 # (39.284484, -76.7144821),
+                 # (39.290409, -76.7495943)
+                 ]
 
     return locations
 
@@ -90,22 +117,23 @@ def pickup_deliver(gclient,
                    time_windows):
     
     shops_arr = [
-        CURRENT_CITY + "price rite",
-        CURRENT_CITY + "shoppers",
-        CURRENT_CITY + "safeway",
-        CURRENT_CITY + "wegmans",
-        CURRENT_CITY + "acme markets",
-        CURRENT_CITY + "walmart",
-        CURRENT_CITY + "7-Eleven",
-        CURRENT_CITY + "Target",
-        CURRENT_CITY + "Save A Lot",
-        CURRENT_CITY + "Walmart Supercenter"
+        CURRENT_CITY + " price rite",
+        CURRENT_CITY + " shoppers",
+        CURRENT_CITY + " safeway",
+        CURRENT_CITY + " wegmans",
+        CURRENT_CITY + " acme markets",
+        CURRENT_CITY + " walmart",
+        CURRENT_CITY + " 7-Eleven",
+        CURRENT_CITY + " Target",
+        CURRENT_CITY + " Save A Lot",
+        CURRENT_CITY + " Walmart Supercenter"
     ]
-    dest_arr = [2, 3, 6, 7, 8, 4]
-    max_delivery_seconds = 60 * 60
+    # dest_arr = [2, 3, 6, 7, 8, 4]
+    dest_arr = [2, 3, 4, 5]
+    max_delivery_minutes = 60
     
     loc_length = len(locations)
-    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, max_delivery_seconds)
+    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, max_delivery_minutes)
     if not result.is_successful:
         return result
 
@@ -207,6 +235,7 @@ def func_time_callback(data):
 
     def travel_time(from_node, to_node):
         # Returns the travel times between two locations.
+        # meters / (meters / minute)
         travel_time = data["distance_matrix"][from_node][to_node] / (data["vehicle_speed"][from_node][to_node])
         return travel_time
 
@@ -315,7 +344,9 @@ def one_hour_dist(gclient,
         return result
     else:
         #           estimated distance between them                  ,  shop's address         ,         estimated time between them.
-        result_body = dist['rows'][0]['elements'][0]['distance']['value'], dist['origin_addresses'][0], dist['rows'][0]['elements'][0]['duration']['value']
+        result_body = dist['rows'][0]['elements'][0]['distance']['value'], \
+                      dist['origin_addresses'][0], \
+                      int(dist['rows'][0]['elements'][0]['duration']['value'] / 60)
         return ResultCode(True, result_body)
 
 
@@ -324,7 +355,7 @@ def one_hour(gclient,
              time_windows,
              shops_arr,
              dest_arr,
-             max_delivery_seconds):
+             max_delivery_minutes):
   
     # calculate the closest shop to index i
     # append the shop's coords to array of distances
@@ -332,13 +363,13 @@ def one_hour(gclient,
     least_dist = 10000000000
     for i in dest_arr:
         dest = locations[i]
-        print("check destination: {}".format(dest))
+        # print("check destination: {}".format(dest))
         for shop in shops_arr:
             result = one_hour_dist(gclient, shop, dest)
-            # if not result.is_successful:
-            #     return result
+            if not result.is_successful:
+                return result
             dist, address, dur = result.body
-            print("  check shop: {}\n    distance: {},\n    address: {},\n    duration: {}".format(shop, dist, address, dur))
+            # print("  check shop: {}\n    distance: {},\n    address: {},\n    duration: {}".format(shop, dist, address, dur))
             if least_dist > dist:
                 least_dist = dist
                 closest = address
@@ -353,10 +384,10 @@ def one_hour(gclient,
         x_coor = (coords[0]['geometry']['viewport']['northeast']['lat'] +
                   coords[0]['geometry']['viewport']['southwest']['lat']) / 2
 
-        if duration > max_delivery_seconds:
+        if duration > max_delivery_minutes:
             returned_message = "closest shop is more than {} away " \
                                "from client =>: {} mins, address: {} " \
-                               "destination: {}".format(max_delivery_seconds, duration, closest, dest)
+                               "destination: {}".format(max_delivery_minutes, duration, closest, dest)
             print(returned_message)
             # exit()
             result = ResultCode(False, returned_message)
@@ -364,7 +395,7 @@ def one_hour(gclient,
         # expand shop time such that the upper bound on the shop time is location's lower bound -
         # time between them and shop's lower bound is shop upper bound - one hour
         upper_bound = (time_windows[i][0] + time_windows[i][1])/2
-        lower_bound = upper_bound - int(max_delivery_seconds / 60)
+        lower_bound = upper_bound - max_delivery_minutes
         upper_bound = int(upper_bound)
         lower_bound = int(lower_bound)
         # upper_bound and lower bound should be related to time of delivery not location's lower bound
@@ -384,6 +415,8 @@ def gmaps_speed(gclient, x1, y1,
     # speed = gclient.snapped_speed_limits([(x1, y1),(x2, y2)])
     # print("gmaps speed arr = ",speed)
     speed = randint(60, 100)
+    # convert km/h to meters/minute
+    speed = 1000 * speed / 60
     return speed
 
 
@@ -418,12 +451,15 @@ def print_solution(data, manager, routing, assignment):
             route_distance += routing.GetArcCostForVehicle(
                 previous_index, index, vehicle_id)
         plan_output += '{}\n'.format(manager.IndexToNode(index))
-        plan_output += 'Distance of the route: {}m\n'.format(route_distance)
+        # plan_output += 'Distance of the route: {}m\n'.format(route_distance)
+        plan_output += 'Duration of the route: {}\n'.format(str(timedelta(minutes=route_distance))[:-3])
         print(plan_output)
         print_str = print_str + plan_output
         total_distance += route_distance
-    print('Total Distance of all routes: {}m'.format(total_distance))
-    print_str = print_str + '\nTotal Distance of all routes: {}m'.format(total_distance)
+    # print('Total Distance of all routes: {}m'.format(total_distance))
+    print('Total duration of all routes: {}'.format(str(timedelta(minutes=total_distance))[:-3]))
+    # print_str = print_str + '\nTotal Distance of all routes: {}m'.format(total_distance)
+    print_str = print_str + '\nTotal duration of all routes: {}'.format(str(timedelta(minutes=total_distance))[:-3])
     # [END solution_printer]
     
     return print_str
@@ -607,10 +643,12 @@ def main():
     routing.SetArcCostEvaluatorOfAllVehicles(time_callback_index)
 
     dimension_name = 'Distance'
-    routing.AddDimension(distance_callback_index, 0, 3000, True,
+    # max distance set to 500km or 500 000 meters
+    routing.AddDimension(distance_callback_index, 0, 500000, True,
                              dimension_name)
     distance_dimension = routing.GetDimensionOrDie(dimension_name)
     distance_dimension.SetGlobalSpanCostCoefficient(100)
+
     for request in data['pickups_deliveries']:
         pickup_index = manager.NodeToIndex(request[0])
         delivery_index = manager.NodeToIndex(request[1])
@@ -623,20 +661,20 @@ def main():
             distance_dimension.CumulVar(delivery_index))
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.FIFO)
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.LIFO)
+
     time = 'Time'
-    routing.AddDimension(time_callback_index, 30, 30, False, time)
+    # max slack time set to 12 hours
+    routing.AddDimension(time_callback_index, 60 * 12, 60 * 12, False, time)
     time_dimension = routing.GetDimensionOrDie(time)
     for location_idx, time_window in enumerate(data['time_windows']):
         if location_idx == 0:
             continue
         index = manager.NodeToIndex(location_idx)
-        # time_dimension.CumulVar(index).SetRange(time_window[0],
-        #                                         time_window[1])
-
-        routing.solver().Add(time_dimension.CumulVar(index) >= time_window[0])
-        routing.solver().Add(time_dimension.CumulVar(index) <= time_window[1])
+        time_dimension.CumulVar(index).SetRange(time_window[0],
+                                                time_window[1])
 
         routing.AddToAssignment(time_dimension.SlackVar(index))
+
     # Add time window constraints for each vehicle start node and 'copy' the
     # slack var in the solution object (aka Assignment) to print it.
     for vehicle_id in range(data['num_vehicles']):
