@@ -1,77 +1,130 @@
 import json
 
-import final_route as fr
 import optparse
+
+DEFAULT_TIME_WINDOW = ("06:00 AM", "11:00 PM")
 
 
 # enter the time windows of all the clients here with the first one as the base time for all
 def time_windows_hardcoded():
     time = [
-        ("01:00 PM", "01:00 PM"),   # departure time
-        ("02:15 PM", "02:25 PM"),
-        ("02:15 PM", "02:25 PM"),
-        ("02:00 PM", "02:10 PM"),
-        # ("01:45 PM", "01:55 PM"),
-        # ("01:00 PM", "01:08 PM"),
-        # ("01:50 PM", "02:00 PM"),
-        # ("01:00 PM", "01:10 PM"),
-        # ("01:10 PM", "01:20 PM"),
-        # ("01:00 PM", "01:10 PM"),
-        # ("02:15 PM", "02:50 PM"),
-        # ("02:25 PM", "03:30 PM"),
-        # ("01:05 PM", "03:15 PM"),
-        # ("01:15 PM", "03:25 PM"),
-        # ("01:10 PM", "03:20 PM"),
-        # ("01:45 PM", "03:55 PM"),
-        # ("01:30 PM", "03:20 PM"),
-        # ("01:00 PM", "04:20 PM")
+        DEFAULT_TIME_WINDOW,   # departure from hub time
+        ("04:00 PM", "06:00 PM"),
+        ("03:00 PM", "04:00 PM"),
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        ("09:00 AM", "10:00 PM"),
+        ("09:30 AM", "10:30 AM"),
+        DEFAULT_TIME_WINDOW,
+        ("08:00 AM", "09:00 AM"),
+        ("10:00 AM", "11:00 AM"),
+        ("02:00 PM", "04:00 PM"),
+        ("12:00 PM", "02:00 PM"),
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        ("11:00 AM", "12:00 PM"),
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        ("01:00 PM", "02:00 PM"),
+        ("12:30 PM", "01:30 PM"),
+        DEFAULT_TIME_WINDOW,
+        ("01:15 PM", "02:15 PM"),
+        ("01:00 PM", "02:30 PM"),
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        DEFAULT_TIME_WINDOW,
+        ("02:00 PM", "04:00 PM"),
+        DEFAULT_TIME_WINDOW,
     ]
-
-    # time = [
-    #     ("01:00 PM", "02:00 PM"),   # departure time
-    #     ("02:15 PM", "03:25 PM"),
-    #     ("02:15 PM", "03:25 PM"),
-    #     ("02:00 PM", "03:10 PM"),
-    #     ("01:45 PM", "02:55 PM"),
-    #     ("01:00 PM", "02:08 PM"),
-    #     ("01:50 PM", "03:00 PM"),
-    #     ("01:00 PM", "02:10 PM"),
-    #     ("01:10 PM", "02:20 PM"),
-    #     ("01:00 PM", "02:10 PM"),
-    #     ("02:15 PM", "03:50 PM"),
-    #     ("02:25 PM", "04:30 PM"),
-    #     ("01:05 PM", "04:15 PM"),
-    #     ("01:15 PM", "04:25 PM"),
-    #     ("01:10 PM", "04:20 PM"),
-    #     ("01:45 PM", "04:55 PM"),
-    #     ("01:30 PM", "04:20 PM"),
-    #     ("01:00 PM", "05:20 PM")
-    #     ]
 
     return time
 
 
 def locations_hardcoded():
     # Array of locations (lat, lng)
-    locations = [(39.290440, -76.612330),   # depot
-                 (39.348230, -76.732660),
-                 (39.320510, -76.724570),
-                 (39.353790, -76.758400),
-                 # (39.348230, -76.732660),
-                 # (39.658420, -77.175440),
-                 # (39.587240, -76.993040),
-                 # (39.383070, -76.763020),
-                 # (39.290440, -76.612330),
-                 # (39.391320, -76.733710),
-                 # (39.321000, -76.516160),
-                 # (39.589700, -76.995910),
-                 # (39.153780, -76.610510),
-                 # (39.245270, -76.661030),
-                 # (39.254990, -76.657526),
-                 # (39.261411, -76.6968749),
-                 # (39.284484, -76.7144821),
-                 # (39.290409, -76.7495943)
-                 ]
+    # locations = [
+    #     (39.2908045, -76.66135799999999),  # warehouse, hub
+    #     (39.3019488, -76.60290979999999),
+    #     (39.3021398, -76.61649560000001),
+    #     (39.3054756, -76.6211893),
+    #     (39.2815397, -76.6549007),
+    #     (39.353636, -76.63003789999999),
+    #     (39.3019488, -76.60290979999999),
+    #     (39.2938149, -76.6156373),
+    #     (39.2897469, -76.61571339999999),
+    #     (39.3355969, -76.6302991),
+    #     (39.2782983, -76.5783549),
+    #     (39.2806272, -76.5892465),
+    #     (39.3582352, -76.78333300000001),
+    #     (39.2782983, -76.5783549),
+    #     (39.2879203, -76.6155026),
+    #     (39.3761097, -76.60880010000001),
+    #     (39.2812367, -76.67296710000001),
+    #     (39.3362825, -76.61858079999999),
+    #     (39.2686942, -76.60015820000001),
+    #     (39.2840184, -76.59947919999999),
+    #     (39.281656, -76.6133813),
+    #     (39.2926324, -76.6155929),
+    #     (39.3285164, -76.6144377),
+    #     (39.355584, -76.5589226),
+    #     (39.3124808, -76.5962292),
+    #     (39.3180117, -76.57607159999999),
+    #     (39.279029, -76.61246100000001),
+    #     (39.3777234, -76.73108189999999),
+    #     (39.272708, -76.6736442),
+    #     (39.3551716, -76.64614449999999),
+    #     (39.3355969, -76.6302991),
+    #     (39.3281407, -76.59497089999999),
+    #     (39.312422299999994, -76.61839559999999),
+    #     (39.2895163, -76.6196826),
+    #     (39.2895163, -76.6196826),
+    #     (39.2895163, -76.6196826),
+    #     (39.2895163, -76.6196826),
+    #     (39.2895163, -76.6196826),
+    #     (39.2895163, -76.6196826),
+    #     (39.2895163, -76.6196826)
+    # ]
+
+    # Array of locations (addresses)
+    locations = [
+        ['232 n franklintown road baltimore md 21223'],   # warehouse, hub
+        ['1000 E Eager St, Baltimore, MD 21202'],
+        ['1030 N Charles St #302, Baltimore, MD 21201'],
+        ['1111 Park Ave #109, Baltimore, MD 21201'],
+        ['2429 Frederick Ave, Baltimore, MD 21223'],
+        ['600 Wyndhurst Ave Suite 270, Baltimore, MD 21210'],
+        ['1000 E Eager St, Baltimore, MD 21202'],
+        ['338 N Charles St, Baltimore, MD 21201'],
+        ['2 N Charles St Suite 130, Baltimore, MD 21201'],
+        ['711 W 40th St #215, Baltimore, MD 21211'],
+        ['2700 Lighthouse Point E #210, Baltimore, MD 21224'],
+        ['949 Fell St Suite A, Baltimore, MD 21231'],
+        ['5415 Old Court Rd Suite S01, Randallstown, MD 21133'],
+        ['2700 Lighthouse Point E #210, Baltimore, MD 21224'],
+        ['36 S Charles St #2202, Baltimore, MD 21201'],
+        ['6601 York Rd, Baltimore, MD 21212'],
+        ['3322 Frederick Ave, Baltimore, MD 21229'],
+        ['3900 N Charles St Ste 112, Baltimore, MD 21218'],
+        ['1712 Whetstone Way, Baltimore, MD 21230'],
+        ['1001 Fleet St # R, Baltimore, MD 21202'],
+        ['600 Light St, Baltimore, MD 21230'],
+        ['300 N Charles St Suite D, Baltimore, MD 21201'],
+        ['200 E 33rd St, Baltimore, MD 21218'],
+        ['5810 Harford Rd, Baltimore, MD 21214'],
+        ['1900 N Broadway, Baltimore, MD 21213'],
+        ['2401 Belair Rd Suite 104, Baltimore, MD 21213'],
+        ['835 Light St, Baltimore, MD 21230'],
+        ['4000 Old Court Rd # 302, Pikesville, MD 21208'],
+        ['3407 Wilkens Ave #205, Baltimore, MD 21229'],
+        ['2 Village Square Ste 250, Baltimore, MD 21210'],
+        ['711 W 40th St Ste 215, Baltimore, MD 21211'],
+        ['1501 E 33rd St, Baltimore, MD 21218']
+    ]
 
     return locations
 
@@ -94,146 +147,14 @@ def shops_hardcoded():
     return shops
 
 
-def dest_hardcoded():
-    # destinations = [2, 3, 6, 7, 8, 4]
-    destinations = [2, 3]
+def cold_deliveries_hardcoded():
+    destinations = [6, 7, 11, 12, 17, 21, 25, 30]
+    # destinations = [6, 7]
     return destinations
 
 
-# index of locations in the locations array to deliver items ,
-# basically u can deliver to the same location twice if u would like to
-def demands_hardcoded():
-    # location index to go to
-    demands = [0, 1, 1, 2, 1, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8, 9]
-    return demands
-
-
-def create_data_model_d():
-    data = {}
-    data['locations'] = \
-        [(4, 4),  # depot
-         (2, 0), (8, 0),  # locations to visit
-         (0, 1), (1, 1),
-         (5, 2), (7, 2),
-         (3, 3), (6, 3),
-         (5, 5), (8, 5),
-         (1, 6), (2, 6),
-         (3, 7), (6, 7),
-         (0, 8), (7, 8)]
-    data['distance_matrix'] = [
-        [
-            0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354,
-            468, 776, 662
-        ],
-        [
-            548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674,
-            1016, 868, 1210
-        ],
-        [
-            776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164,
-            1130, 788, 1552, 754
-        ],
-        [
-            696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822,
-            1164, 560, 1358
-        ],
-        [
-            582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708,
-            1050, 674, 1244
-        ],
-        [
-            274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628,
-            514, 1050, 708
-        ],
-        [
-            502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856,
-            514, 1278, 480
-        ],
-        [
-            194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320,
-            662, 742, 856
-        ],
-        [
-            308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662,
-            320, 1084, 514
-        ],
-        [
-            194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388,
-            274, 810, 468
-        ],
-        [
-            536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764,
-            730, 388, 1152, 354
-        ],
-        [
-            502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114,
-            308, 650, 274, 844
-        ],
-        [
-            388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194,
-            536, 388, 730
-        ],
-        [
-            354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0,
-            342, 422, 536
-        ],
-        [
-            468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536,
-            342, 0, 764, 194
-        ],
-        [
-            776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274,
-            388, 422, 764, 0, 798
-        ],
-        [
-            662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730,
-            536, 194, 798, 0
-        ],
-    ]
-    # [START pickups_deliveries]
-    data['pickups_deliveries'] = [
-        [1, 6],
-        [2, 10],
-        [4, 3],
-        [5, 9],
-        [7, 8],
-        [15, 11],
-        [13, 12],
-        [16, 14],
-    ]
-    data["time_windows"] = [
-        (0, 50),  # depot
-        (7, 120),  # 1
-        (10, 150),  # 2
-        (5, 140),  # 3
-        (5, 130),  # 4
-        (0, 50),  # 5
-        (5, 100),  # 6
-        (0, 100),  # 7
-        (5, 100),  # 8
-        (0, 50),  # 9
-        (10, 160),  # 10
-        (10, 150),  # 11
-        (0, 50),  # 12
-        (5, 100),  # 13
-        (7, 120),  # 14
-        (10, 150),  # 15
-        (5, 150),  # 16
-    ]
-    data["time_per_demand_unit"] = 1
-    gclient = 1
-    data["vehicle_speed"] = fr.func_speed_mat(data['locations'], gclient)
-    # print(data["vehicle_speed"])
-
-    data["time_matrix"] = fr.func_time_matrix(data)
-    # print(data["time_matrix"])
-    data["demands"] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
-
-    # [END pickups_deliveries]
-    data['num_vehicles'] = 4
-    data['depot'] = 0
-
-    return fr.ResultCode(True, data)
+def max_vehicles_hardcoded():
+    return 20
 
 
 if __name__ == '__main__':
@@ -252,6 +173,6 @@ if __name__ == '__main__':
     if args.shops is not None or args.all is not None:
         print('shops:', json.dumps(shops_hardcoded()))
     if args.destinations is not None or args.all is not None:
-        print('destinations:', json.dumps(dest_hardcoded()))
+        print('destinations:', json.dumps(cold_deliveries_hardcoded()))
     if args.demands is not None or args.all is not None:
         print('demands:', json.dumps(demands_hardcoded()))

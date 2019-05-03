@@ -28,8 +28,7 @@ def final_route():
     locations = request.args.get('locations')
     time_windows = request.args.get('time_windows')
     shops = request.args.get('shops')
-    destinations = request.args.get('destinations')
-    demands = request.args.get('demands')
+    cold_deliveries = request.args.get('cold_deliveries')
     num_vehicles = request.args.get('num_vehicles')
 
     if locations is None:
@@ -38,18 +37,17 @@ def final_route():
         return ResultCode(False, 'Missed required parameter "time_windows"').as_json_string()
     if shops is None:
         return ResultCode(False, 'Missed required parameter "shops"').as_json_string()
-    if destinations is None:
-        return ResultCode(False, 'Missed required parameter "destinations"').as_json_string()
-    if demands is None:
-        return ResultCode(False, 'Missed required parameter "demands"').as_json_string()
+    if cold_deliveries is None:
+        # return ResultCode(False, 'Missed required parameter "cold_deliveries"').as_json_string()
+        cold_deliveries = '[]'
     if num_vehicles is None:
-        return ResultCode(False, 'Missed required parameter "num_vehicles"').as_json_string()
+        # return ResultCode(False, 'Missed required parameter "num_vehicles"').as_json_string()
+        num_vehicles = hardcoded.max_vehicles_hardcoded()
 
     locations = json.loads(locations)
     time_windows = json.loads(time_windows)
     shops = json.loads(shops)
-    destinations = json.loads(destinations)
-    demands = json.loads(demands)
+    cold_deliveries = json.loads(cold_deliveries)
     num_vehicles = int(num_vehicles)
 
     for i in range(len(locations)):
@@ -60,10 +58,9 @@ def final_route():
     print(locations)
     print(time_windows)
     print(shops)
-    print(destinations)
-    print(demands)
+    print(cold_deliveries)
 
-    result = fr.create_data_model(locations, time_windows, shops, destinations, demands, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, shops, cold_deliveries, num_vehicles)
     if not result.successful:
         return result
 
@@ -78,17 +75,17 @@ def final_route_debug():
     locations = hardcoded.locations_hardcoded()
     time_windows = hardcoded.time_windows_hardcoded()
     shops = hardcoded.shops_hardcoded()
-    destinations = hardcoded.dest_hardcoded()
-    demands = hardcoded.demands_hardcoded()
-    num_vehicles = 4
+    destinations = hardcoded.cold_deliveries_hardcoded()
+    # demands = hardcoded.demands_hardcoded()
+    num_vehicles = hardcoded.max_vehicles_hardcoded()
 
-    result = fr.create_data_model(locations, time_windows, shops, destinations, demands, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, shops, destinations, num_vehicles)
     # result = create_data_model_d()
     if not result.successful:
         return result
 
     data = result.body
-    return fr.calculate_routes(data)
+    return json.dumps(fr.calculate_routes(data, False))
 
 
 if __name__ == '__main__':

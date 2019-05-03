@@ -8,7 +8,9 @@ import googlemaps
 from random import randint
 from datetime import timedelta
 
-MAX_DELIVERY_MINUTES = 60
+# is the max time between picking up the cold item and delivering it to a customer
+MAX_COLD_DELIVERY_MINUTES = 60
+MAX_DAY_TIME = 24 * 60
 MAX_ROUTE_DURATION = 4 * 60
 
 
@@ -23,26 +25,24 @@ class ResultCode:
         return json.dumps(result)
 
 
-def pickup_deliver(gclient,
-                   locations,
-                   time_windows,
-                   shops_arr,
-                   dest_arr):
+def add_pickups_for_cold_deliveries(gclient,
+                                    locations,
+                                    time_windows,
+                                    shops_arr,
+                                    dest_arr):
     '''
-    Function for pickup and delivery
-    dest_arr is the index of locations in the locations array that need cold items delivered
-    max_delivery_seconds is the max time between picking up the cold item and delivering it to a customer
+    Function for pickup cold deliveries from the nearest shop to destination.
 
     :param gclient:
     :param locations:
     :param time_windows:
     :param shops_arr:
-    :param dest_arr:
+    :param dest_arr: is the index of locations in the locations array that need cold items delivered
     :return:
     '''
     
     loc_length = len(locations)
-    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, MAX_DELIVERY_MINUTES)
+    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, MAX_COLD_DELIVERY_MINUTES)
     if not result.successful:
         return result
 
@@ -52,15 +52,14 @@ def pickup_deliver(gclient,
     return ResultCode(True, pickup_deliver)
 
 
-def create_data_model(locations, time_windows, shops, destinations, demands, num_vehicles):
+def create_data_model(locations, time_windows, shops, cold_deliveries, num_vehicles):
     '''
     Initialize all the variables.
 
     :param locations:
     :param time_windows:
     :param shops:
-    :param destinations:
-    :param demands:
+    :param cold_deliveries:
     :param num_vehicles:
     :return:
     '''
@@ -69,15 +68,18 @@ def create_data_model(locations, time_windows, shops, destinations, demands, num
     
     data = {}
     data['locations'] = locations
+    if len(data['locations'][0]) == 1:
+        convert_addresses_to_coordinates(data['locations'], gclient)
     data["time_windows"] = conv_time(time_windows)
 
-    result = pickup_deliver(gclient, data['locations'], data['time_windows'], shops, destinations)
+    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['time_windows'], shops, cold_deliveries)
 
     if not result.successful:
         return result
     data['pickups_deliveries'] = result.body
 
     print("distance_matrix starts...", len(data['locations']))
+
     result = func_dist_mat(data['locations'], gclient)
     if not result.successful:
         return result
@@ -88,7 +90,7 @@ def create_data_model(locations, time_windows, shops, destinations, demands, num
     data["vehicle_speed"] = func_speed_mat(data['locations'], gclient)    
     data["time_matrix"] = func_time_matrix(data)
     
-    data["demands"] = demands
+    # data["demands"] = demands
     
     data['num_vehicles'] = num_vehicles
     data['depot'] = 0
@@ -104,7 +106,7 @@ def conv_time(time_arr):
     base_time_0 = convert_to_24(time_arr[0][0])
     base_time_1 = convert_to_24(time_arr[0][1])
     time_list = []
-    for i in range(len(time_arr)-1):
+    for i in range(len(time_arr)):
         a = abs(base_time_0 - convert_to_24(time_arr[i][0]))
         b = abs(base_time_0 - convert_to_24(time_arr[i][1]))
         time_list.append((a, b))
@@ -184,9 +186,13 @@ def func_dist_mat(loc, gclient):
     for from_node in range(size):
         dist_mat[from_node] = [0] * size
         for to_node in range(size):
-            print("calculate distance...", from_node, to_node)
+            print("calculate distance... {}/{}, from {} to {}".format(size * from_node + to_node,
+                                                                      size * size,
+                                                                      loc[from_node],
+                                                                      loc[to_node]))
             x1 = loc[from_node][0]
             y1 = loc[from_node][1]
+
             x2 = loc[to_node][0]
             y2 = loc[to_node][1]
 
@@ -232,6 +238,23 @@ def gmaps_dist(gclient, x1, y1,
     dist1 = dist1['rows'][0]['elements'][0]['distance']['value']
 
     return ResultCode(True, int(max(dist1, dist2)))
+
+
+def get_coordinates(loc, gclient):
+    coordinates = gclient.geocode(loc)
+
+    x_coor = coordinates[0]['geometry']['location']['lat']
+    y_coor = coordinates[0]['geometry']['location']['lng']
+
+    return x_coor, y_coor
+
+
+def convert_addresses_to_coordinates(data, gclient):
+    size = len(data)
+    for i in range(size):
+        if len(data[i]) == 1:
+            x, y = get_coordinates(data[i], gclient)
+            data[i] = (x, y)
 
 
 # ***************************************************************************************
@@ -355,19 +378,21 @@ def create_solution_as_json(data, manager, routing, assignment):
         index = routing.Start(vehicle_id)
         plan_output = ''
         vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
-        route_distance = 0
+        route_duration = 0
         while not routing.IsEnd(index):
             plan_output += ' {} -> '.format(manager.IndexToNode(index))
             previous_index = index
             index = assignment.Value(routing.NextVar(index))
-            route_distance += routing.GetArcCostForVehicle(
+            route_duration += routing.GetArcCostForVehicle(
                 previous_index, index, vehicle_id)
         plan_output += '{}'.format(manager.IndexToNode(index))
         vehicle_route['route'] = plan_output
-        vehicle_route['total_duration'] = str(timedelta(minutes=route_distance))[:-3]
+        vehicle_route['total_duration'] = str(timedelta(minutes=route_duration))[:-3]
 
-        result['result'].append(vehicle_route)
-        total_distance += route_distance
+        if route_duration > 0:
+            result['result'].append(vehicle_route)
+
+        total_distance += route_duration
     result['total_duration'] = str(timedelta(minutes=total_distance))[:-3]
 
     return result
@@ -433,15 +458,15 @@ def calculate_routes(data_model, with_print=True):
 
     time_callback_index = routing.RegisterTransitCallback(time_callback)
 
-    # Register demands callback
-    def demand_callback(from_index):
-        """Returns the demand of the node."""
-        # Convert from routing variable Index to demands NodeIndex.
-        from_node = manager.IndexToNode(from_index)
-        return data_model.demands[from_node]
-
-    demand_callback_index = routing.RegisterUnaryTransitCallback(
-        demand_callback)
+    # # Register demands callback
+    # def demand_callback(from_index):
+    #     """Returns the demand of the node."""
+    #     # Convert from routing variable Index to demands NodeIndex.
+    #     from_node = manager.IndexToNode(from_index)
+    #     return data_model.demands[from_node]
+    #
+    # demand_callback_index = routing.RegisterUnaryTransitCallback(
+    #     demand_callback)
 
     routing.SetArcCostEvaluatorOfAllVehicles(time_callback_index)
 
@@ -467,14 +492,13 @@ def calculate_routes(data_model, with_print=True):
 
     time = 'Time'
     # max slack time set to 12 hours
-    routing.AddDimension(time_callback_index, MAX_ROUTE_DURATION, MAX_ROUTE_DURATION, False, time)
+    routing.AddDimension(time_callback_index, MAX_DAY_TIME, MAX_DAY_TIME, False, time)
     time_dimension = routing.GetDimensionOrDie(time)
     for location_idx, time_window in enumerate(data_model['time_windows']):
         if location_idx == 0:
             continue
         index = manager.NodeToIndex(location_idx)
-        time_dimension.CumulVar(index).SetRange(time_window[0],
-                                                time_window[1])
+        time_dimension.CumulVar(index).SetRange(time_window[0], time_window[1])
 
         routing.AddToAssignment(time_dimension.SlackVar(index))
 
@@ -485,7 +509,11 @@ def calculate_routes(data_model, with_print=True):
         time_window = data_model['time_windows'][0]
         time_dimension.CumulVar(index).SetRange(time_window[0],
                                                 time_window[1])
+
         routing.AddToAssignment(time_dimension.SlackVar(index))
+
+        # time_dimension.CumulVar(routing.End(vehicle_id)).SetMax(MAX_ROUTE_DURATION)
+        # routing.solver().Add(time_dimension.CumulVar(routing.End(vehicle_id)) <= int(MAX_ROUTE_DURATION))
 
     # Instantiate route start and end times to produce feasible times.
     for vehicle_id in range(data_model['num_vehicles']):
