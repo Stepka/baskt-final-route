@@ -1,140 +1,49 @@
 from __future__ import print_function
+
+import json
+
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
-import math
 import googlemaps
 from random import randint
-from flask import Flask
-import sys
-import optparse
 from datetime import timedelta
 
-app = Flask(__name__)
-
-CURRENT_CITY = 'Baltimore'
+MAX_DELIVERY_MINUTES = 60
+MAX_ROUTE_DURATION = 4 * 60
 
 
 # Helper class to convert a DynamoDB item to JSON.
 class ResultCode:
     def __init__(self, is_successful, body=None):
-        self.is_successful = is_successful
+        self.successful = is_successful
         self.body = body
 
-
-@app.route("/")
-def check_if_running():
-    print("All is ok, server is running!")
-    return "All is ok, server is running!"
+    def as_json_string(self):
+        result = {'successful': self.successful, 'body': self.body}
+        return json.dumps(result)
 
 
-# here is API methon for get some result with this script
-@app.route("/final_route")
-def final_route():
-    return main()
-
-
-# enter the time windows of all the clients here with the first one as the base time for all
-def time_arr():
-    time = [
-        ("01:00 PM", "01:00 PM"),   # departure time
-        ("02:15 PM", "02:25 PM"),
-        ("02:15 PM", "02:25 PM"),
-        ("02:00 PM", "02:10 PM"),
-        ("01:45 PM", "01:55 PM"),
-        ("01:00 PM", "01:08 PM"),
-        # ("01:50 PM", "02:00 PM"),
-        # ("01:00 PM", "01:10 PM"),
-        # ("01:10 PM", "01:20 PM"),
-        # ("01:00 PM", "01:10 PM"),
-        # ("02:15 PM", "02:50 PM"),
-        # ("02:25 PM", "03:30 PM"),
-        # ("01:05 PM", "03:15 PM"),
-        # ("01:15 PM", "03:25 PM"),
-        # ("01:10 PM", "03:20 PM"),
-        # ("01:45 PM", "03:55 PM"),
-        # ("01:30 PM", "03:20 PM"),
-        # ("01:00 PM", "04:20 PM")
-    ]
-
-    # time = [
-    #     ("00:00 PM", "10:00 PM"),   # departure time
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ("00:00 PM", "10:00 PM"),
-    #     ]
-
-    time = conv_time(time)
-
-    print(time)
-
-    return time
-
-
-def data_arr():
-    # Array of locations (lat, lng)
-    locations = [(39.290440, -76.612330),   # depot
-                 (39.348230, -76.732660),
-                 (39.320510, -76.724570),
-                 (39.353790, -76.758400),
-                 (39.348230, -76.732660),
-                 (39.658420, -77.175440),
-                 # (39.587240, -76.993040),
-                 # (39.383070, -76.763020),
-                 # (39.290440, -76.612330),
-                 # (39.391320, -76.733710),
-                 # (39.321000, -76.516160),
-                 # (39.589700, -76.995910),
-                 # (39.153780, -76.610510),
-                 # (39.245270, -76.661030),
-                 # (39.254990, -76.657526),
-                 # (39.261411, -76.6968749),
-                 # (39.284484, -76.7144821),
-                 # (39.290409, -76.7495943)
-                 ]
-
-    return locations
-
-
-# function for pickup and delivery
-# dest_arr is the index of locations in the locations array that need cold items delivered
-# max_delivery_seconds is the max time between picking up the cold item and delivering it to a customer
 def pickup_deliver(gclient,
                    locations,
-                   time_windows):
-    
-    shops_arr = [
-        CURRENT_CITY + " price rite",
-        CURRENT_CITY + " shoppers",
-        CURRENT_CITY + " safeway",
-        CURRENT_CITY + " wegmans",
-        CURRENT_CITY + " acme markets",
-        CURRENT_CITY + " walmart",
-        CURRENT_CITY + " 7-Eleven",
-        CURRENT_CITY + " Target",
-        CURRENT_CITY + " Save A Lot",
-        CURRENT_CITY + " Walmart Supercenter"
-    ]
-    # dest_arr = [2, 3, 6, 7, 8, 4]
-    dest_arr = [2, 3, 4, 5]
-    max_delivery_minutes = 60
+                   time_windows,
+                   shops_arr,
+                   dest_arr):
+    '''
+    Function for pickup and delivery
+    dest_arr is the index of locations in the locations array that need cold items delivered
+    max_delivery_seconds is the max time between picking up the cold item and delivering it to a customer
+
+    :param gclient:
+    :param locations:
+    :param time_windows:
+    :param shops_arr:
+    :param dest_arr:
+    :return:
+    '''
     
     loc_length = len(locations)
-    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, max_delivery_minutes)
-    if not result.is_successful:
+    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, MAX_DELIVERY_MINUTES)
+    if not result.successful:
         return result
 
     pickup_deliver = []
@@ -143,32 +52,34 @@ def pickup_deliver(gclient,
     return ResultCode(True, pickup_deliver)
 
 
-# index of locations in the locations array to deliver items ,
-# basically u can deliver to the same location twice if u would like to
-def demands_arr():
-    # location index to go to
-    demands = [0, 1, 1, 2, 1, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8, 9]
-    return demands
+def create_data_model(locations, time_windows, shops, destinations, demands, num_vehicles):
+    '''
+    Initialize all the variables.
 
+    :param locations:
+    :param time_windows:
+    :param shops:
+    :param destinations:
+    :param demands:
+    :param num_vehicles:
+    :return:
+    '''
 
-# initialize all the variables
-def create_data_model():
     gclient = googlemaps.Client(key='AIzaSyAei-_KeQOTzjN_6sIPuQ3yW4MlRk0MtXk')
     
     data = {}
-    data['locations'] = data_arr()
-    data["time_windows"] = time_arr()
-    print("pickup_deliver starts...")
-    result = pickup_deliver(gclient, data['locations'], data['time_windows'])
+    data['locations'] = locations
+    data["time_windows"] = conv_time(time_windows)
 
-    if not result.is_successful:
+    result = pickup_deliver(gclient, data['locations'], data['time_windows'], shops, destinations)
+
+    if not result.successful:
         return result
     data['pickups_deliveries'] = result.body
-    print("pickup_deliver ends")
 
     print("distance_matrix starts...", len(data['locations']))
     result = func_dist_mat(data['locations'], gclient)
-    if not result.is_successful:
+    if not result.successful:
         return result
     data['distance_matrix'] = result.body
     print("distance_matrix ends")
@@ -177,9 +88,9 @@ def create_data_model():
     data["vehicle_speed"] = func_speed_mat(data['locations'], gclient)    
     data["time_matrix"] = func_time_matrix(data)
     
-    data["demands"] = demands_arr()
+    data["demands"] = demands
     
-    data['num_vehicles'] = 4
+    data['num_vehicles'] = num_vehicles
     data['depot'] = 0
     print("data ready")
 
@@ -280,7 +191,7 @@ def func_dist_mat(loc, gclient):
             y2 = loc[to_node][1]
 
             result = gmaps_dist(gclient, x1, y1, x2, y2)
-            if not result.is_successful:
+            if not result.successful:
                 return result
             dist_mat[from_node][to_node] = result.body
 
@@ -366,7 +277,7 @@ def one_hour(gclient,
         # print("check destination: {}".format(dest))
         for shop in shops_arr:
             result = one_hour_dist(gclient, shop, dest)
-            if not result.is_successful:
+            if not result.successful:
                 return result
             dist, address, dur = result.body
             # print("  check shop: {}\n    distance: {},\n    address: {},\n    duration: {}".format(shop, dist, address, dur))
@@ -414,7 +325,7 @@ def gmaps_speed(gclient, x1, y1,
                          x2, y2):
     # speed = gclient.snapped_speed_limits([(x1, y1),(x2, y2)])
     # print("gmaps speed arr = ",speed)
-    speed = randint(60, 100)
+    speed = randint(20, 50)
     # convert km/h to meters/minute
     speed = 1000 * speed / 60
     return speed
@@ -433,6 +344,33 @@ def func_speed_mat(loc, gclient):
             y2 = loc[to_node][1]
             speed_mat[from_node][to_node] = gmaps_speed(gclient, x1, y1, x2, y2)
     return speed_mat
+
+
+def create_solution_as_json(data, manager, routing, assignment):
+    result = {'result': [], 'success': 'true'}
+    total_distance = 0
+    print_str = ""
+    for vehicle_id in range(data['num_vehicles']):
+        vehicle_route = {}
+        index = routing.Start(vehicle_id)
+        plan_output = ''
+        vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
+        route_distance = 0
+        while not routing.IsEnd(index):
+            plan_output += ' {} -> '.format(manager.IndexToNode(index))
+            previous_index = index
+            index = assignment.Value(routing.NextVar(index))
+            route_distance += routing.GetArcCostForVehicle(
+                previous_index, index, vehicle_id)
+        plan_output += '{}'.format(manager.IndexToNode(index))
+        vehicle_route['route'] = plan_output
+        vehicle_route['total_duration'] = str(timedelta(minutes=route_distance))[:-3]
+
+        result['result'].append(vehicle_route)
+        total_distance += route_distance
+    result['total_duration'] = str(timedelta(minutes=total_distance))[:-3]
+
+    return result
 
 
 # [START solution_printer]
@@ -465,150 +403,15 @@ def print_solution(data, manager, routing, assignment):
     return print_str
 
 
-def create_data_model_d():
-    data = {}
-    data['locations'] = \
-        [(4, 4),  # depot
-         (2, 0), (8, 0),  # locations to visit
-         (0, 1), (1, 1),
-         (5, 2), (7, 2),
-         (3, 3), (6, 3),
-         (5, 5), (8, 5),
-         (1, 6), (2, 6),
-         (3, 7), (6, 7),
-         (0, 8), (7, 8)]
-    data['distance_matrix'] = [
-        [
-            0, 548, 776, 696, 582, 274, 502, 194, 308, 194, 536, 502, 388, 354,
-            468, 776, 662
-        ],
-        [
-            548, 0, 684, 308, 194, 502, 730, 354, 696, 742, 1084, 594, 480, 674,
-            1016, 868, 1210
-        ],
-        [
-            776, 684, 0, 992, 878, 502, 274, 810, 468, 742, 400, 1278, 1164,
-            1130, 788, 1552, 754
-        ],
-        [
-            696, 308, 992, 0, 114, 650, 878, 502, 844, 890, 1232, 514, 628, 822,
-            1164, 560, 1358
-        ],
-        [
-            582, 194, 878, 114, 0, 536, 764, 388, 730, 776, 1118, 400, 514, 708,
-            1050, 674, 1244
-        ],
-        [
-            274, 502, 502, 650, 536, 0, 228, 308, 194, 240, 582, 776, 662, 628,
-            514, 1050, 708
-        ],
-        [
-            502, 730, 274, 878, 764, 228, 0, 536, 194, 468, 354, 1004, 890, 856,
-            514, 1278, 480
-        ],
-        [
-            194, 354, 810, 502, 388, 308, 536, 0, 342, 388, 730, 468, 354, 320,
-            662, 742, 856
-        ],
-        [
-            308, 696, 468, 844, 730, 194, 194, 342, 0, 274, 388, 810, 696, 662,
-            320, 1084, 514
-        ],
-        [
-            194, 742, 742, 890, 776, 240, 468, 388, 274, 0, 342, 536, 422, 388,
-            274, 810, 468
-        ],
-        [
-            536, 1084, 400, 1232, 1118, 582, 354, 730, 388, 342, 0, 878, 764,
-            730, 388, 1152, 354
-        ],
-        [
-            502, 594, 1278, 514, 400, 776, 1004, 468, 810, 536, 878, 0, 114,
-            308, 650, 274, 844
-        ],
-        [
-            388, 480, 1164, 628, 514, 662, 890, 354, 696, 422, 764, 114, 0, 194,
-            536, 388, 730
-        ],
-        [
-            354, 674, 1130, 822, 708, 628, 856, 320, 662, 388, 730, 308, 194, 0,
-            342, 422, 536
-        ],
-        [
-            468, 1016, 788, 1164, 1050, 514, 514, 662, 320, 274, 388, 650, 536,
-            342, 0, 764, 194
-        ],
-        [
-            776, 868, 1552, 560, 674, 1050, 1278, 742, 1084, 810, 1152, 274,
-            388, 422, 764, 0, 798
-        ],
-        [
-            662, 1210, 754, 1358, 1244, 708, 480, 856, 514, 468, 354, 844, 730,
-            536, 194, 798, 0
-        ],
-    ]
-    # [START pickups_deliveries]
-    data['pickups_deliveries'] = [
-        [1, 6],
-        [2, 10],
-        [4, 3],
-        [5, 9],
-        [7, 8],
-        [15, 11],
-        [13, 12],
-        [16, 14],
-    ]
-    data["time_windows"] = [
-            (0, 50),  # depot
-            (7, 120),  # 1
-            (10, 150),  # 2
-            (5, 140),  # 3
-            (5, 130),  # 4
-            (0, 50),  # 5
-            (5, 100),  # 6
-            (0, 100),  # 7
-            (5, 100),  # 8
-            (0, 50),  # 9
-            (10, 160),  # 10
-            (10, 150),  # 11
-            (0, 50),  # 12
-            (5, 100),  # 13
-            (7, 120),  # 14
-            (10, 150),  # 15
-            (5, 150),  # 16
-        ]
-    data["time_per_demand_unit"] = 1
-    gclient = 1
-    data["vehicle_speed"] = func_speed_mat(data['locations'], gclient)
-    # print(data["vehicle_speed"])
-    
-    data["time_matrix"] = func_time_matrix(data)
-    # print(data["time_matrix"])
-    data["demands"] = [0, 1, 1, 2, 4, 2, 4, 8, 8, 1, 2, 1, 2, 4, 4, 8, 8]
-    
-    # [END pickups_deliveries]
-    data['num_vehicles'] = 4
-    data['depot'] = 0
-
-    return ResultCode(True, data)
-
-
-def check():
-    return "all is ok"
-
-
-def main():
-    print("create data model")
-    result = create_data_model()
-    # result = create_data_model_d()
-    if not result.is_successful:
-        return result.body
-    data = result.body
-
-    print(data)
+def calculate_routes(data_model, with_print=True):
+    '''
+    Function to calculate routes based on passed data model. Use create_data_model() for model creation.
+    :param data_model: data model created with create_data_model() function
+    :return: assigns
+    '''
 
     manager = pywrapcp.RoutingIndexManager(
-        len(data['distance_matrix']), data['num_vehicles'], data['depot'])
+        len(data_model['distance_matrix']), data_model['num_vehicles'], data_model['depot'])
     routing = pywrapcp.RoutingModel(manager)
 
     def distance_callback(from_index, to_index):
@@ -616,7 +419,7 @@ def main():
         # Convert from routing variable Index to distance matrix NodeIndex.
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
-        return data['distance_matrix'][from_node][to_node]
+        return data_model['distance_matrix'][from_node][to_node]
 
     distance_callback_index = routing.RegisterTransitCallback(distance_callback)
 
@@ -626,7 +429,7 @@ def main():
         # Convert from routing variable Index to distance matrix NodeIndex.
         from_node = manager.IndexToNode(from_index)
         to_node = manager.IndexToNode(to_index)
-        return data["time_matrix"][from_node][to_node]
+        return data_model["time_matrix"][from_node][to_node]
 
     time_callback_index = routing.RegisterTransitCallback(time_callback)
 
@@ -635,7 +438,7 @@ def main():
         """Returns the demand of the node."""
         # Convert from routing variable Index to demands NodeIndex.
         from_node = manager.IndexToNode(from_index)
-        return data.demands[from_node]
+        return data_model.demands[from_node]
 
     demand_callback_index = routing.RegisterUnaryTransitCallback(
         demand_callback)
@@ -649,7 +452,7 @@ def main():
     distance_dimension = routing.GetDimensionOrDie(dimension_name)
     distance_dimension.SetGlobalSpanCostCoefficient(100)
 
-    for request in data['pickups_deliveries']:
+    for request in data_model['pickups_deliveries']:
         pickup_index = manager.NodeToIndex(request[0])
         delivery_index = manager.NodeToIndex(request[1])
         routing.AddPickupAndDelivery(pickup_index, delivery_index)
@@ -664,9 +467,9 @@ def main():
 
     time = 'Time'
     # max slack time set to 12 hours
-    routing.AddDimension(time_callback_index, 60 * 12, 60 * 12, False, time)
+    routing.AddDimension(time_callback_index, MAX_ROUTE_DURATION, MAX_ROUTE_DURATION, False, time)
     time_dimension = routing.GetDimensionOrDie(time)
-    for location_idx, time_window in enumerate(data['time_windows']):
+    for location_idx, time_window in enumerate(data_model['time_windows']):
         if location_idx == 0:
             continue
         index = manager.NodeToIndex(location_idx)
@@ -677,15 +480,15 @@ def main():
 
     # Add time window constraints for each vehicle start node and 'copy' the
     # slack var in the solution object (aka Assignment) to print it.
-    for vehicle_id in range(data['num_vehicles']):
+    for vehicle_id in range(data_model['num_vehicles']):
         index = routing.Start(vehicle_id)
-        time_window = data['time_windows'][0]
+        time_window = data_model['time_windows'][0]
         time_dimension.CumulVar(index).SetRange(time_window[0],
                                                 time_window[1])
         routing.AddToAssignment(time_dimension.SlackVar(index))
 
     # Instantiate route start and end times to produce feasible times.
-    for vehicle_id in range(data['num_vehicles']):
+    for vehicle_id in range(data_model['num_vehicles']):
         routing.AddVariableMinimizedByFinalizer(
             time_dimension.CumulVar(routing.End(vehicle_id)))
         routing.AddVariableMinimizedByFinalizer(
@@ -701,18 +504,14 @@ def main():
     assignment = routing.SolveWithParameters(search_parameters)
 
     # Print the solution.
-    if assignment:
-        return print_solution(data, manager, routing, assignment)
-    else: 
-        return "no assignment"
-
-
-if __name__ == '__main__':
-    parser = optparse.OptionParser(usage="python simple_server.py -p ")
-    parser.add_option('-p', '--port', action='store', dest='port', help='The port to listen on.')
-    (args, _) = parser.parse_args()
-    if args.port is None:
-        print("Missing required argument: -p/--port")
-        sys.exit(1)
-    app.run(host='0.0.0.0', port=int(args.port), debug=False)
+    if with_print:
+        if assignment:
+            return print_solution(data_model, manager, routing, assignment)
+        else:
+            return "no assignment"
+    else:
+        if assignment:
+            return create_solution_as_json(data_model, manager, routing, assignment)
+        else:
+            return {'result': [], 'success': 'false', 'error': 'no assignment'}
 

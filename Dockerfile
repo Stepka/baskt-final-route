@@ -14,7 +14,7 @@ RUN pip install --upgrade --user ortools
 RUN pip install googlemaps
 
 # Bundle app source
-COPY Final_route.py Final_route.py
+COPY final_route.py Final_route.py
 
 EXPOSE  5000
-CMD ["python", "Final_route.py", "-p 5000"]
+CMD ["python", "final_route_flask_server.py", "-p 5000"]
