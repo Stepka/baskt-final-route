@@ -76,7 +76,7 @@ def create_data_model(locations, time_windows, shops, cold_deliveries, num_vehic
 
     if not result.successful:
         return result
-    data['pickups_deliveries'] = result.body
+    data['cold_deliveries'] = result.body
 
     print("distance_matrix starts...", len(data['locations']))
 
@@ -477,7 +477,7 @@ def calculate_routes(data_model, with_print=True):
     distance_dimension = routing.GetDimensionOrDie(dimension_name)
     distance_dimension.SetGlobalSpanCostCoefficient(100)
 
-    for request in data_model['pickups_deliveries']:
+    for request in data_model['cold_deliveries']:
         pickup_index = manager.NodeToIndex(request[0])
         delivery_index = manager.NodeToIndex(request[1])
         routing.AddPickupAndDelivery(pickup_index, delivery_index)
