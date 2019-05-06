@@ -18,37 +18,50 @@ def check_if_running():
     return "All is ok, server is running!"
 
 
-@app.route("/final_route")
+@app.route("/final_route", methods=['GET', 'POST'])
 def final_route():
     '''
     Here is API method for get some result with this script
     :return:
     '''
 
-    locations = request.args.get('locations')
-    time_windows = request.args.get('time_windows')
-    shops = request.args.get('shops')
-    cold_deliveries = request.args.get('cold_deliveries')
-    num_vehicles = request.args.get('num_vehicles')
+    params_json = request.get_json()
 
-    if locations is None:
+    if 'locations' in params_json:
+        locations = params_json['locations']
+    else:
         return ResultCode(False, 'Missed required parameter "locations"').as_json_string()
-    if time_windows is None:
+
+    if 'time_windows' in params_json:
+        time_windows = params_json['time_windows']
+    else:
         return ResultCode(False, 'Missed required parameter "time_windows"').as_json_string()
-    if shops is None:
+
+    if 'order_ids' in params_json:
+        order_ids = params_json['order_ids']
+    else:
+        return ResultCode(False, 'Missed required parameter "order_ids"').as_json_string()
+
+    if 'shops' in params_json:
+        shops = params_json['shops']
+    else:
         return ResultCode(False, 'Missed required parameter "shops"').as_json_string()
-    if cold_deliveries is None:
-        # return ResultCode(False, 'Missed required parameter "cold_deliveries"').as_json_string()
-        cold_deliveries = '[]'
-    if num_vehicles is None:
-        # return ResultCode(False, 'Missed required parameter "num_vehicles"').as_json_string()
+
+    if 'cold_deliveries' in params_json:
+        cold_deliveries = params_json['cold_deliveries']
+    else:
+        cold_deliveries = []
+
+    if 'num_vehicles' in params_json:
+        num_vehicles = params_json['num_vehicles']
+    else:
         num_vehicles = hardcoded.max_vehicles_hardcoded()
 
-    locations = json.loads(locations)
-    time_windows = json.loads(time_windows)
-    shops = json.loads(shops)
-    cold_deliveries = json.loads(cold_deliveries)
-    num_vehicles = int(num_vehicles)
+    # locations = json.loads(locations)
+    # time_windows = json.loads(time_windows)
+    # shops = json.loads(shops)
+    # cold_deliveries = json.loads(cold_deliveries)
+    # num_vehicles = int(num_vehicles)
 
     for i in range(len(locations)):
         locations[i] = tuple(locations[i])
@@ -57,15 +70,16 @@ def final_route():
 
     print(locations)
     print(time_windows)
+    print(order_ids)
     print(shops)
     print(cold_deliveries)
 
-    result = fr.create_data_model(locations, time_windows, shops, cold_deliveries, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles)
     if not result.successful:
         return result
 
     data = result.body
-    return json.dumps(fr.calculate_routes(data, False))
+    return fr.calculate_routes(data, False).as_json_string()
 
 
 @app.route("/final_route/debug")
@@ -76,16 +90,17 @@ def final_route_debug():
     time_windows = hardcoded.time_windows_hardcoded()
     shops = hardcoded.shops_hardcoded()
     destinations = hardcoded.cold_deliveries_hardcoded()
-    # demands = hardcoded.demands_hardcoded()
+    order_ids = hardcoded.order_ids_hardcoded()
     num_vehicles = hardcoded.max_vehicles_hardcoded()
 
-    result = fr.create_data_model(locations, time_windows, shops, destinations, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, order_ids, shops, destinations, num_vehicles)
     # result = create_data_model_d()
     if not result.successful:
         return result
 
     data = result.body
-    return json.dumps(fr.calculate_routes(data, False))
+
+    return fr.calculate_routes(data, False).as_json_string()
 
 
 if __name__ == '__main__':

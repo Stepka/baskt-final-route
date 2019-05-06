@@ -6,7 +6,7 @@ from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import googlemaps
 from random import randint
-from datetime import timedelta
+from datetime import datetime, date, timedelta
 
 # is the max time between picking up the cold item and delivering it to a customer
 MAX_COLD_DELIVERY_MINUTES = 60
@@ -27,7 +27,10 @@ class ResultCode:
 
 def add_pickups_for_cold_deliveries(gclient,
                                     locations,
+                                    addresses,
+                                    order_ids,
                                     time_windows,
+                                    types,
                                     shops_arr,
                                     dest_arr):
     '''
@@ -42,7 +45,8 @@ def add_pickups_for_cold_deliveries(gclient,
     '''
     
     loc_length = len(locations)
-    result = one_hour(gclient, locations, time_windows, shops_arr, dest_arr, MAX_COLD_DELIVERY_MINUTES)
+    result = one_hour(gclient, locations, addresses, order_ids, time_windows, types,
+                      shops_arr, dest_arr, MAX_COLD_DELIVERY_MINUTES)
     if not result.successful:
         return result
 
@@ -52,7 +56,7 @@ def add_pickups_for_cold_deliveries(gclient,
     return ResultCode(True, pickup_deliver)
 
 
-def create_data_model(locations, time_windows, shops, cold_deliveries, num_vehicles):
+def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles):
     '''
     Initialize all the variables.
 
@@ -68,11 +72,17 @@ def create_data_model(locations, time_windows, shops, cold_deliveries, num_vehic
     
     data = {}
     data['locations'] = locations
+    data['addresses'] = ['' for _ in locations]
     if len(data['locations'][0]) == 1:
+        data['addresses'] = [i[0] for i in locations]
         convert_addresses_to_coordinates(data['locations'], gclient)
     data["time_windows"] = conv_time(time_windows)
+    data['order_ids'] = order_ids
+    data['types'] = ['delivery' for _ in locations]
+    data['types'][0] = 'start'
 
-    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['time_windows'], shops, cold_deliveries)
+    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['addresses'], data['order_ids'],
+                                             data['time_windows'], data['types'], shops, cold_deliveries)
 
     if not result.successful:
         return result
@@ -93,6 +103,8 @@ def create_data_model(locations, time_windows, shops, cold_deliveries, num_vehic
     # data["demands"] = demands
     
     data['num_vehicles'] = num_vehicles
+    # data['vehicle_load_time'] = 5
+    # data['vehicle_unload_time'] = 5
     data['depot'] = 0
     print("data ready")
 
@@ -103,12 +115,14 @@ def create_data_model(locations, time_windows, shops, cold_deliveries, num_vehic
 # ************************   time_arr functions *******************************************
 # ****************************************************************************************
 def conv_time(time_arr):
-    base_time_0 = convert_to_24(time_arr[0][0])
-    base_time_1 = convert_to_24(time_arr[0][1])
+    # base_time_0 = convert_to_24(time_arr[0][0])
+    # base_time_1 = convert_to_24(time_arr[0][1])
     time_list = []
     for i in range(len(time_arr)):
-        a = abs(base_time_0 - convert_to_24(time_arr[i][0]))
-        b = abs(base_time_0 - convert_to_24(time_arr[i][1]))
+        # a = abs(base_time_0 - convert_to_24(time_arr[i][0]))
+        # b = abs(base_time_0 - convert_to_24(time_arr[i][1]))
+        a = abs(convert_to_24(time_arr[i][0]))
+        b = abs(convert_to_24(time_arr[i][1]))
         time_list.append((a, b))
     return time_list
 
@@ -127,6 +141,13 @@ def convert_to_24(datestr):
     else:        
         # add 12 to hours and remove PM 
         return (int(datestr[:2]) + 12)*60 + int(datestr[3:6])
+
+
+def conv_minutes_to_time(minutes):
+    today = date.today()
+    today = datetime.combine(today, datetime.min.time())
+    time1 = today + timedelta(minutes=minutes)
+    return time1.strftime("%I:%M %p")
 
 
 # ***************************************************************************************
@@ -286,7 +307,10 @@ def one_hour_dist(gclient,
 
 def one_hour(gclient,
              locations,
+             addresses,
+             order_ids,
              time_windows,
+             types,
              shops_arr,
              dest_arr,
              max_delivery_minutes):
@@ -336,6 +360,9 @@ def one_hour(gclient,
 
         time_windows.append((lower_bound, upper_bound))
         locations.append((x_coor, y_coor))
+        addresses.append(closest)
+        order_ids.append(order_ids[i])
+        types.append('pickup')
 
     return ResultCode(True)
 
@@ -369,74 +396,83 @@ def func_speed_mat(loc, gclient):
     return speed_mat
 
 
-def create_solution_as_json(data, manager, routing, assignment):
-    result = {'result': [], 'success': 'true'}
-    total_distance = 0
+def parse_solution(data, manager, routing, assignment):
+    """Prints assignment on console."""
+    time_dimension = routing.GetDimensionOrDie('Time')
+    total_duration = 0
     print_str = ""
+    result = {'result': [], 'success': 'true'}
     for vehicle_id in range(data['num_vehicles']):
         vehicle_route = {}
-        index = routing.Start(vehicle_id)
-        plan_output = ''
         vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
-        route_duration = 0
-        while not routing.IsEnd(index):
-            plan_output += ' {} -> '.format(manager.IndexToNode(index))
-            previous_index = index
-            index = assignment.Value(routing.NextVar(index))
-            route_duration += routing.GetArcCostForVehicle(
-                previous_index, index, vehicle_id)
-        plan_output += '{}'.format(manager.IndexToNode(index))
-        vehicle_route['route'] = plan_output
-        vehicle_route['total_duration'] = str(timedelta(minutes=route_duration))[:-3]
-
-        if route_duration > 0:
-            result['result'].append(vehicle_route)
-
-        total_distance += route_duration
-    result['total_duration'] = str(timedelta(minutes=total_distance))[:-3]
-
-    return result
-
-
-# [START solution_printer]
-def print_solution(data, manager, routing, assignment):
-    """Prints assignment on console."""
-    total_distance = 0
-    print_str = ""
-    for vehicle_id in range(data['num_vehicles']):
+        vehicle_route['destinations'] = []
         index = routing.Start(vehicle_id)
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
-        route_distance = 0
+        start_time_var = time_dimension.CumulVar(index)
+
         while not routing.IsEnd(index):
-            plan_output += ' {} -> '.format(manager.IndexToNode(index))
+            time_var = time_dimension.CumulVar(index)
+            destination = {}
+            destination['index'] = manager.IndexToNode(index)
+            destination['type'] = data['types'][destination['index']]
+            destination['order_id'] = data['order_ids'][destination['index']]
+            destination['location'] = data['locations'][destination['index']]
+            destination['address'] = data['addresses'][destination['index']]
+            destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
+            destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
+
             previous_index = index
             index = assignment.Value(routing.NextVar(index))
-            route_distance += routing.GetArcCostForVehicle(
-                previous_index, index, vehicle_id)
-        plan_output += '{}\n'.format(manager.IndexToNode(index))
-        # plan_output += 'Distance of the route: {}m\n'.format(route_distance)
-        plan_output += 'Duration of the route: {}\n'.format(str(timedelta(minutes=route_distance))[:-3])
-        print(plan_output)
-        print_str = print_str + plan_output
-        total_distance += route_distance
-    # print('Total Distance of all routes: {}m'.format(total_distance))
-    print('Total duration of all routes: {}'.format(str(timedelta(minutes=total_distance))[:-3]))
-    # print_str = print_str + '\nTotal Distance of all routes: {}m'.format(total_distance)
-    print_str = print_str + '\nTotal duration of all routes: {}'.format(str(timedelta(minutes=total_distance))[:-3])
-    # [END solution_printer]
-    
-    return print_str
+            destination['next_destination_duration'] = routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+
+            plan_output += ' {0} for {1} [{2}, {3}] \n ... {4} min -> '.format(destination['type'],
+                                                                               destination['order_id'],
+                                                                               destination['from_time'],
+                                                                               destination['to_time'],
+                                                                               destination['next_destination_duration'])
+            vehicle_route['destinations'].append(destination)
+
+        # add back to depot
+        time_var = time_dimension.CumulVar(index)
+        destination = {}
+        destination['index'] = manager.IndexToNode(index)
+        destination['order_id'] = data['order_ids'][destination['index']]
+        destination['location'] = data['locations'][destination['index']]
+        destination['address'] = data['addresses'][destination['index']]
+        destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
+        destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
+        plan_output += ' {0} [{1}, {2}]\n'.format(destination['order_id'],
+                                                  destination['from_time'],
+                                                  destination['to_time'])
+        vehicle_route['destinations'].append(destination)
+
+        # calculate totals for route/vehicle
+        route_duration = assignment.Min(time_var) - assignment.Min(start_time_var)
+        plan_output += 'Duration of the route: {}\n'.format(str(timedelta(minutes=route_duration))[:-3])
+        vehicle_route['route_string'] = plan_output
+        vehicle_route['route_duration'] = str(timedelta(minutes=route_duration))[:-3]
+
+        if len(vehicle_route['destinations']) > 2:
+            result['result'].append(vehicle_route)
+
+            print_str = print_str + plan_output
+            total_duration += route_duration
+
+    print_str = print_str + '\nTotal duration of all routes: {}'.format(str(timedelta(minutes=total_duration))[:-3])
+
+    return result, print_str
 
 
 def calculate_routes(data_model, with_print=True):
     '''
     Function to calculate routes based on passed data model. Use create_data_model() for model creation.
     :param data_model: data model created with create_data_model() function
+    :param with_print: return json (False) or print solution (True)
     :return: assigns
     '''
 
     manager = pywrapcp.RoutingIndexManager(
-        len(data_model['distance_matrix']), data_model['num_vehicles'], data_model['depot'])
+        len(data_model['time_matrix']), data_model['num_vehicles'], data_model['depot'])
     routing = pywrapcp.RoutingModel(manager)
 
     def distance_callback(from_index, to_index):
@@ -472,10 +508,14 @@ def calculate_routes(data_model, with_print=True):
 
     dimension_name = 'Distance'
     # max distance set to 500km or 500 000 meters
-    routing.AddDimension(distance_callback_index, 0, 500000, True,
-                             dimension_name)
+    routing.AddDimension(distance_callback_index, 0, 500000, True, dimension_name)
     distance_dimension = routing.GetDimensionOrDie(dimension_name)
     distance_dimension.SetGlobalSpanCostCoefficient(100)
+
+    time = 'Time'
+    # max slack time set to 12 hours
+    routing.AddDimension(time_callback_index, MAX_DAY_TIME, MAX_DAY_TIME, False, time)
+    time_dimension = routing.GetDimensionOrDie(time)
 
     for request in data_model['cold_deliveries']:
         pickup_index = manager.NodeToIndex(request[0])
@@ -485,15 +525,11 @@ def calculate_routes(data_model, with_print=True):
             routing.VehicleVar(pickup_index) == routing.VehicleVar(
                 delivery_index))
         routing.solver().Add(
-            distance_dimension.CumulVar(pickup_index) <=
-            distance_dimension.CumulVar(delivery_index))
+            time_dimension.CumulVar(pickup_index) <=
+            time_dimension.CumulVar(delivery_index))
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.FIFO)
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.LIFO)
 
-    time = 'Time'
-    # max slack time set to 12 hours
-    routing.AddDimension(time_callback_index, MAX_DAY_TIME, MAX_DAY_TIME, False, time)
-    time_dimension = routing.GetDimensionOrDie(time)
     for location_idx, time_window in enumerate(data_model['time_windows']):
         if location_idx == 0:
             continue
@@ -512,34 +548,32 @@ def calculate_routes(data_model, with_print=True):
 
         routing.AddToAssignment(time_dimension.SlackVar(index))
 
-        # time_dimension.CumulVar(routing.End(vehicle_id)).SetMax(MAX_ROUTE_DURATION)
-        # routing.solver().Add(time_dimension.CumulVar(routing.End(vehicle_id)) <= int(MAX_ROUTE_DURATION))
-
     # Instantiate route start and end times to produce feasible times.
     for vehicle_id in range(data_model['num_vehicles']):
         routing.AddVariableMinimizedByFinalizer(
-            time_dimension.CumulVar(routing.End(vehicle_id)))
-        routing.AddVariableMinimizedByFinalizer(
             time_dimension.CumulVar(routing.Start(vehicle_id)))
+        routing.AddVariableMinimizedByFinalizer(
+            time_dimension.CumulVar(routing.End(vehicle_id)))
 
     # Setting first solution heuristic (cheapest addition).
     search_parameters = pywrapcp.DefaultRoutingSearchParameters()
     # pylint: disable=no-member
     search_parameters.first_solution_strategy = (
-            routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION)
+        routing_enums_pb2.FirstSolutionStrategy.PARALLEL_CHEAPEST_INSERTION)
+    # search_parameters.first_solution_strategy = (
+    #     routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
 
     # Solve the problem.
     assignment = routing.SolveWithParameters(search_parameters)
 
     # Print the solution.
-    if with_print:
-        if assignment:
-            return print_solution(data_model, manager, routing, assignment)
+    if assignment:
+        solution_json, solution_str = parse_solution(data_model, manager, routing, assignment)
+        print(solution_str)
+        if with_print:
+            return ResultCode(True, solution_str)
         else:
-            return "no assignment"
+            return ResultCode(True, solution_json)
     else:
-        if assignment:
-            return create_solution_as_json(data_model, manager, routing, assignment)
-        else:
-            return {'result': [], 'success': 'false', 'error': 'no assignment'}
+        return ResultCode(False, "no assignment")
 

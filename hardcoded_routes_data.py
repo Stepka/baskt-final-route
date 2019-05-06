@@ -16,30 +16,30 @@ def time_windows_hardcoded():
         DEFAULT_TIME_WINDOW,
         ("09:00 AM", "10:00 PM"),
         ("09:30 AM", "10:30 AM"),
-        DEFAULT_TIME_WINDOW,
-        ("08:00 AM", "09:00 AM"),
-        ("10:00 AM", "11:00 AM"),
-        ("02:00 PM", "04:00 PM"),
-        ("12:00 PM", "02:00 PM"),
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        ("11:00 AM", "12:00 PM"),
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        ("01:00 PM", "02:00 PM"),
-        ("12:30 PM", "01:30 PM"),
-        DEFAULT_TIME_WINDOW,
-        ("01:15 PM", "02:15 PM"),
-        ("01:00 PM", "02:30 PM"),
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        DEFAULT_TIME_WINDOW,
-        ("02:00 PM", "04:00 PM"),
-        DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # ("08:00 AM", "09:00 AM"),
+        # ("10:00 AM", "11:00 AM"),
+        # ("02:00 PM", "04:00 PM"),
+        # ("12:00 PM", "02:00 PM"),
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # ("11:00 AM", "12:00 PM"),
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # ("01:00 PM", "02:00 PM"),
+        # ("12:30 PM", "01:30 PM"),
+        # DEFAULT_TIME_WINDOW,
+        # ("01:15 PM", "02:15 PM"),
+        # ("01:00 PM", "02:30 PM"),
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # DEFAULT_TIME_WINDOW,
+        # ("02:00 PM", "04:00 PM"),
+        # DEFAULT_TIME_WINDOW,
     ]
 
     return time
@@ -100,30 +100,30 @@ def locations_hardcoded():
         ['600 Wyndhurst Ave Suite 270, Baltimore, MD 21210'],
         ['1000 E Eager St, Baltimore, MD 21202'],
         ['338 N Charles St, Baltimore, MD 21201'],
-        ['2 N Charles St Suite 130, Baltimore, MD 21201'],
-        ['711 W 40th St #215, Baltimore, MD 21211'],
-        ['2700 Lighthouse Point E #210, Baltimore, MD 21224'],
-        ['949 Fell St Suite A, Baltimore, MD 21231'],
-        ['5415 Old Court Rd Suite S01, Randallstown, MD 21133'],
-        ['2700 Lighthouse Point E #210, Baltimore, MD 21224'],
-        ['36 S Charles St #2202, Baltimore, MD 21201'],
-        ['6601 York Rd, Baltimore, MD 21212'],
-        ['3322 Frederick Ave, Baltimore, MD 21229'],
-        ['3900 N Charles St Ste 112, Baltimore, MD 21218'],
-        ['1712 Whetstone Way, Baltimore, MD 21230'],
-        ['1001 Fleet St # R, Baltimore, MD 21202'],
-        ['600 Light St, Baltimore, MD 21230'],
-        ['300 N Charles St Suite D, Baltimore, MD 21201'],
-        ['200 E 33rd St, Baltimore, MD 21218'],
-        ['5810 Harford Rd, Baltimore, MD 21214'],
-        ['1900 N Broadway, Baltimore, MD 21213'],
-        ['2401 Belair Rd Suite 104, Baltimore, MD 21213'],
-        ['835 Light St, Baltimore, MD 21230'],
-        ['4000 Old Court Rd # 302, Pikesville, MD 21208'],
-        ['3407 Wilkens Ave #205, Baltimore, MD 21229'],
-        ['2 Village Square Ste 250, Baltimore, MD 21210'],
-        ['711 W 40th St Ste 215, Baltimore, MD 21211'],
-        ['1501 E 33rd St, Baltimore, MD 21218']
+        # ['2 N Charles St Suite 130, Baltimore, MD 21201'],
+        # ['711 W 40th St #215, Baltimore, MD 21211'],
+        # ['2700 Lighthouse Point E #210, Baltimore, MD 21224'],
+        # ['949 Fell St Suite A, Baltimore, MD 21231'],
+        # ['5415 Old Court Rd Suite S01, Randallstown, MD 21133'],
+        # ['2700 Lighthouse Point E #210, Baltimore, MD 21224'],
+        # ['36 S Charles St #2202, Baltimore, MD 21201'],
+        # ['6601 York Rd, Baltimore, MD 21212'],
+        # ['3322 Frederick Ave, Baltimore, MD 21229'],
+        # ['3900 N Charles St Ste 112, Baltimore, MD 21218'],
+        # ['1712 Whetstone Way, Baltimore, MD 21230'],
+        # ['1001 Fleet St # R, Baltimore, MD 21202'],
+        # ['600 Light St, Baltimore, MD 21230'],
+        # ['300 N Charles St Suite D, Baltimore, MD 21201'],
+        # ['200 E 33rd St, Baltimore, MD 21218'],
+        # ['5810 Harford Rd, Baltimore, MD 21214'],
+        # ['1900 N Broadway, Baltimore, MD 21213'],
+        # ['2401 Belair Rd Suite 104, Baltimore, MD 21213'],
+        # ['835 Light St, Baltimore, MD 21230'],
+        # ['4000 Old Court Rd # 302, Pikesville, MD 21208'],
+        # ['3407 Wilkens Ave #205, Baltimore, MD 21229'],
+        # ['2 Village Square Ste 250, Baltimore, MD 21210'],
+        # ['711 W 40th St Ste 215, Baltimore, MD 21211'],
+        # ['1501 E 33rd St, Baltimore, MD 21218']
     ]
 
     return locations
@@ -148,9 +148,24 @@ def shops_hardcoded():
 
 
 def cold_deliveries_hardcoded():
-    destinations = [6, 7, 11, 12, 17, 21, 25, 30]
-    # destinations = [6, 7]
+    # destinations = [6, 7, 11, 12, 17, 21, 25, 30]
+    destinations = [6, 7]
+    # destinations = []
     return destinations
+
+
+def order_ids_hardcoded():
+    order_ids = [
+        "depot",
+        "order 2",
+        "order 3",
+        "order 4",
+        "order 5",
+        "order 6",
+        "order 7",
+        "order 8"
+    ]
+    return order_ids
 
 
 def max_vehicles_hardcoded():
@@ -166,13 +181,20 @@ if __name__ == '__main__':
     parser.add_option('-m', '--demands', action='store_true', dest='demands')
     parser.add_option('-a', '--all', action='store_true', dest='all')
     (args, _) = parser.parse_args()
-    if args.locations is not None or args.all is not None:
-        print('locations:', json.dumps(locations_hardcoded()))
-    if args.time_windows is not None or args.all is not None:
-        print('time_windows:', json.dumps(time_windows_hardcoded()))
-    if args.shops is not None or args.all is not None:
-        print('shops:', json.dumps(shops_hardcoded()))
-    if args.destinations is not None or args.all is not None:
-        print('destinations:', json.dumps(cold_deliveries_hardcoded()))
-    if args.demands is not None or args.all is not None:
-        print('demands:', json.dumps(demands_hardcoded()))
+    # if args.locations is not None or args.all is not None:
+    #     print('locations:', json.dumps(locations_hardcoded()))
+    # if args.time_windows is not None or args.all is not None:
+    #     print('time_windows:', json.dumps(time_windows_hardcoded()))
+    # if args.shops is not None or args.all is not None:
+    #     print('shops:', json.dumps(shops_hardcoded()))
+    # if args.destinations is not None or args.all is not None:
+    #     print('destinations:', json.dumps(cold_deliveries_hardcoded()))
+    # if args.demands is not None or args.all is not None:
+    #     print('demands:', json.dumps(demands_hardcoded()))
+
+    print(json.dumps({
+        'locations': locations_hardcoded(),
+        'time_windows': time_windows_hardcoded(),
+        'shops': shops_hardcoded(),
+        'cold_deliveries': cold_deliveries_hardcoded()
+    }))
