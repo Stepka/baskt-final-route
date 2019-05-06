@@ -57,6 +57,11 @@ def final_route():
     else:
         num_vehicles = hardcoded.max_vehicles_hardcoded()
 
+    if 'with_print' in params_json:
+        with_print = params_json['with_print'] == 'true'
+    else:
+        with_print = False
+
     # locations = json.loads(locations)
     # time_windows = json.loads(time_windows)
     # shops = json.loads(shops)
@@ -79,7 +84,9 @@ def final_route():
         return result
 
     data = result.body
-    return fr.calculate_routes(data, False).as_json_string()
+
+    result, _ = fr.calculate_routes(data, with_print)
+    return result.as_json_string()
 
 
 @app.route("/final_route/debug")
@@ -100,7 +107,8 @@ def final_route_debug():
 
     data = result.body
 
-    return fr.calculate_routes(data, False).as_json_string()
+    result, _ = fr.calculate_routes(data, True)
+    return result.as_json_string()
 
 
 if __name__ == '__main__':

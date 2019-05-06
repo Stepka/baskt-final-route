@@ -396,12 +396,12 @@ def func_speed_mat(loc, gclient):
     return speed_mat
 
 
-def parse_solution(data, manager, routing, assignment):
+def parse_solution(data, manager, routing, assignment, with_print):
     """Prints assignment on console."""
     time_dimension = routing.GetDimensionOrDie('Time')
     total_duration = 0
     print_str = ""
-    result = {'result': [], 'success': 'true'}
+    result = {'routes': []}
     for vehicle_id in range(data['num_vehicles']):
         vehicle_route = {}
         vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
@@ -449,11 +449,12 @@ def parse_solution(data, manager, routing, assignment):
         # calculate totals for route/vehicle
         route_duration = assignment.Min(time_var) - assignment.Min(start_time_var)
         plan_output += 'Duration of the route: {}\n'.format(str(timedelta(minutes=route_duration))[:-3])
-        vehicle_route['route_string'] = plan_output
+        if with_print:
+            vehicle_route['route_string'] = plan_output
         vehicle_route['route_duration'] = str(timedelta(minutes=route_duration))[:-3]
 
         if len(vehicle_route['destinations']) > 2:
-            result['result'].append(vehicle_route)
+            result['routes'].append(vehicle_route)
 
             print_str = print_str + plan_output
             total_duration += route_duration
@@ -568,12 +569,8 @@ def calculate_routes(data_model, with_print=True):
 
     # Print the solution.
     if assignment:
-        solution_json, solution_str = parse_solution(data_model, manager, routing, assignment)
-        print(solution_str)
-        if with_print:
-            return ResultCode(True, solution_str)
-        else:
-            return ResultCode(True, solution_json)
+        solution_json, solution_str = parse_solution(data_model, manager, routing, assignment, with_print)
+        return ResultCode(True, solution_json), solution_str
     else:
-        return ResultCode(False, "no assignment")
+        return ResultCode(False, "no assignment"), "no assignment"
 

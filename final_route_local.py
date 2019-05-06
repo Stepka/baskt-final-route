@@ -20,5 +20,5 @@ if __name__ == '__main__':
     else:
         data = result.body
         print(data)
-        result = fr.calculate_routes(data)
-        print(result.body)
+        result, print_string = fr.calculate_routes(data, False)
+        print(print_string)
