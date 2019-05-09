@@ -412,7 +412,7 @@ After you have updated code you need to load new code to ec2 instance and rebuil
 ##### *Case 1*
 
 Run shell script *rebuild_docker.sh* that remove old container and image and build and run new:
-`sh rebuild_docker.sh`
+`sudo sh rebuild_docker.sh`
 
 ##### *Case 2*
 
