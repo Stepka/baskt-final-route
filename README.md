@@ -45,7 +45,7 @@ and the last call with depot time window  `["04:00 PM", "08:00 PM"]`.
 Note, if time window not specified, please, pass maximum Gig time window for corresponding element, 
 f. e. `"09:00 AM", "10:00 PM"`.
 
-##### _Return_
+##### _result_
 Json with routes description
 - **successful**: if true all is ok.
 - **body**: result.
@@ -405,7 +405,7 @@ Json with routes description
 For test purposes you can call 
 http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route/debug
 for calculate routes on hardcoded data
-## Rerun server
+## Rebuild server
 
 After you have updated code you need to load new code to ec2 instance and rebuild and rerun docker.  
 
