@@ -363,6 +363,8 @@ def one_hour(gclient,
         lower_bound = int(lower_bound)
         if lower_bound < depot_start_time:
             lower_bound = depot_start_time
+        if upper_bound < lower_bound:
+            upper_bound = lower_bound
 
         # upper_bound and lower bound should be related to time of delivery not location's lower bound
 
