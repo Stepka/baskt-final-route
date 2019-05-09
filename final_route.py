@@ -103,7 +103,7 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
     # data["demands"] = demands
     
     data['num_vehicles'] = num_vehicles
-    # data['vehicle_load_time'] = 5
+    data['vehicle_load_time'] = 20
     # data['vehicle_unload_time'] = 5
     data['depot'] = 0
     print("data ready")
@@ -319,28 +319,32 @@ def one_hour(gclient,
     # append the shop's coords to array of distances
     # increase number of locations by 1
     least_dist = 10000000000
+
+    # all pickups should be after depot start time
+    depot_start_time = time_windows[0][0]
+
     for i in dest_arr:
         dest = locations[i]
         # print("check destination: {}".format(dest))
         for shop in shops_arr:
-            result = one_hour_dist(gclient, shop, dest)
+            result = one_hour_dist(gclient, (shop['latitude'], shop['longitude']), dest)
             if not result.successful:
                 return result
             dist, address, dur = result.body
-            # print("  check shop: {}\n    distance: {},\n    address: {},\n    duration: {}".format(shop, dist, address, dur))
             if least_dist > dist:
                 least_dist = dist
+                shop_id = shop['shopId']
                 closest = address
                 duration = dur
 
         print('closets is {}, distance: {}, duration: {}'.format(closest, least_dist, duration))
-        coords = gclient.geocode(closest)
-
-        y_coor = (coords[0]['geometry']['viewport']['northeast']['lng'] +
-                  coords[0]['geometry']['viewport']['southwest']['lng']) / 2
-
-        x_coor = (coords[0]['geometry']['viewport']['northeast']['lat'] +
-                  coords[0]['geometry']['viewport']['southwest']['lat']) / 2
+        # coords = gclient.geocode(closest)
+        #
+        # y_coor = (coords[0]['geometry']['viewport']['northeast']['lng'] +
+        #           coords[0]['geometry']['viewport']['southwest']['lng']) / 2
+        #
+        # x_coor = (coords[0]['geometry']['viewport']['northeast']['lat'] +
+        #           coords[0]['geometry']['viewport']['southwest']['lat']) / 2
 
         if duration > max_delivery_minutes:
             returned_message = "closest shop is more than {} away " \
@@ -352,14 +356,19 @@ def one_hour(gclient,
             return result
         # expand shop time such that the upper bound on the shop time is location's lower bound -
         # time between them and shop's lower bound is shop upper bound - one hour
-        upper_bound = (time_windows[i][0] + time_windows[i][1])/2
-        lower_bound = upper_bound - max_delivery_minutes
+        # upper_bound = (time_windows[i][0] + time_windows[i][1])/2
+        upper_bound = time_windows[i][1] - max_delivery_minutes
+        lower_bound = time_windows[i][0] - max_delivery_minutes
         upper_bound = int(upper_bound)
         lower_bound = int(lower_bound)
+        if lower_bound < depot_start_time:
+            lower_bound = depot_start_time
+
         # upper_bound and lower bound should be related to time of delivery not location's lower bound
 
         time_windows.append((lower_bound, upper_bound))
-        locations.append((x_coor, y_coor))
+        # locations.append((x_coor, y_coor))
+        locations.append((shop['latitude'], shop['longitude']))
         addresses.append(closest)
         order_ids.append(order_ids[i])
         types.append('pickup')
@@ -420,6 +429,8 @@ def parse_solution(data, manager, routing, assignment, with_print):
             destination['address'] = data['addresses'][destination['index']]
             destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
             destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
+            time_window = data['time_windows'][destination['index']]
+            destination['time_window'] = (conv_minutes_to_time(time_window[0]), conv_minutes_to_time(time_window[1]))
 
             previous_index = index
             index = assignment.Value(routing.NextVar(index))
@@ -441,6 +452,8 @@ def parse_solution(data, manager, routing, assignment, with_print):
         destination['address'] = data['addresses'][destination['index']]
         destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
         destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
+        time_window = data['time_windows'][destination['index']]
+        destination['time_window'] = (conv_minutes_to_time(time_window[0]), conv_minutes_to_time(time_window[1]))
         plan_output += ' {0} [{1}, {2}]\n'.format(destination['order_id'],
                                                   destination['from_time'],
                                                   destination['to_time'])
@@ -531,13 +544,21 @@ def calculate_routes(data_model, with_print=True):
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.FIFO)
     # routing.SetPickupAndDeliveryPolicyOfAllVehicles(pywrapcp.RoutingModel.LIFO)
 
+    intervals = []
     for location_idx, time_window in enumerate(data_model['time_windows']):
         if location_idx == 0:
             continue
         index = manager.NodeToIndex(location_idx)
+        # print("::", index, type(time_window[0]), type(time_window[1]), time_window[0], time_window[1])
         time_dimension.CumulVar(index).SetRange(time_window[0], time_window[1])
 
         routing.AddToAssignment(time_dimension.SlackVar(index))
+
+        # Add time windows at start of routes
+        intervals.append(
+            routing.solver().FixedDurationIntervalVar(
+                time_dimension.CumulVar(index),
+                data_model['vehicle_load_time'], 'load_interval'))
 
     # Add time window constraints for each vehicle start node and 'copy' the
     # slack var in the solution object (aka Assignment) to print it.
@@ -548,6 +569,18 @@ def calculate_routes(data_model, with_print=True):
                                                 time_window[1])
 
         routing.AddToAssignment(time_dimension.SlackVar(index))
+
+        # print("::>", index)
+        # Add time windows at start of routes
+        intervals.append(
+            routing.solver().FixedDurationIntervalVar(
+                time_dimension.CumulVar(index),
+                data_model['vehicle_load_time'], 'load_interval'))
+        # print(intervals[len(intervals) - 1])
+
+    depot_usage = [1 for _ in range(len(intervals))]
+    routing.solver().Add(
+        routing.solver().Cumulative(intervals, depot_usage, 100, 'load_unload'))
 
     # Instantiate route start and end times to produce feasible times.
     for vehicle_id in range(data_model['num_vehicles']):

@@ -25,32 +25,35 @@ def final_route():
     :return:
     '''
 
+    locations = []
+    time_windows = []
+    cold_deliveries = []
+    order_ids = []
+
     params_json = request.get_json()
 
-    if 'locations' in params_json:
-        locations = params_json['locations']
+    if 'orders' in params_json:
+        orders = params_json['orders']
     else:
-        return ResultCode(False, 'Missed required parameter "locations"').as_json_string()
+        return ResultCode(False, 'Missed required parameter "orders"').as_json_string()
 
-    if 'time_windows' in params_json:
-        time_windows = params_json['time_windows']
+    if 'hub' in params_json:
+        hub = params_json['hub']
+        locations.append((hub['latitude'], hub['longitude']))
+        time_windows.append((hub['fromTime'], hub['toTime']))
+        order_ids.append('')
     else:
-        return ResultCode(False, 'Missed required parameter "time_windows"').as_json_string()
-
-    if 'order_ids' in params_json:
-        order_ids = params_json['order_ids']
-    else:
-        return ResultCode(False, 'Missed required parameter "order_ids"').as_json_string()
+        return ResultCode(False, 'Missed required parameter "hub"').as_json_string()
 
     if 'shops' in params_json:
         shops = params_json['shops']
     else:
         return ResultCode(False, 'Missed required parameter "shops"').as_json_string()
 
-    if 'cold_deliveries' in params_json:
-        cold_deliveries = params_json['cold_deliveries']
-    else:
-        cold_deliveries = []
+    # if 'cold_deliveries' in params_json:
+    #     cold_deliveries = params_json['cold_deliveries']
+    # else:
+    #     cold_deliveries = []
 
     if 'num_vehicles' in params_json:
         num_vehicles = params_json['num_vehicles']
@@ -68,10 +71,19 @@ def final_route():
     # cold_deliveries = json.loads(cold_deliveries)
     # num_vehicles = int(num_vehicles)
 
-    for i in range(len(locations)):
-        locations[i] = tuple(locations[i])
-    for i in range(len(time_windows)):
-        time_windows[i] = tuple(time_windows[i])
+    for i in range(len(orders)):
+        order = orders[i]
+        order_ids.append(order['orderId'])
+        locations.append((order['latitude'], order['longitude']))
+        time_windows.append((order['fromTime'], order['toTime']))
+        if order['isColdDelivery']:
+            # we add i + 1 index because 0 is for hub
+            cold_deliveries.append(i + 1)
+
+    # for i in range(len(locations)):
+    #     locations[i] = tuple(locations[i])
+    # for i in range(len(time_windows)):
+    #     time_windows[i] = tuple(time_windows[i])
 
     print(locations)
     print(time_windows)

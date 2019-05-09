@@ -132,16 +132,11 @@ def locations_hardcoded():
 def shops_hardcoded():
     current_city = 'Baltimore'
     shops = [
-        current_city + " price rite",
-        current_city + " shoppers",
-        current_city + " safeway",
-        current_city + " wegmans",
-        current_city + " acme markets",
-        current_city + " walmart",
-        current_city + " 7-Eleven",
-        current_city + " Target",
-        current_city + " Save A Lot",
-        current_city + " Walmart Supercenter"
+        {
+            "shopId": "24ce6075-394d-4b78-845d-48b58736d934",
+            "latitude": 39.3054756,
+            "longitude": -76.6211893
+        }
     ]
 
     return shops
