@@ -29,7 +29,8 @@ Among passed shops routing algo will search the nearest pickup point for cold de
     - fromTime - upper bound of hub working time in format`"HH:MM PM"`, f. e. `"04:00 PM"`.
     - toTime - lower bound hub working time in format`"HH:MM PM"`, f. e.  `"06:00 PM"`. 
 - **num_vehicles** - Number of available vehicles. Default is `20`.
-- **with_print** - If `true` to each route in the result adds field `'route_string' `with full description of the route.
+- **with_print** - If `true` to each route in the result adds field `'route_string' `with full description of the route. 
+Default is `false`.
 
       
 **Important!** For Hub you should to specify start and end time of Gig or interval for work. 
