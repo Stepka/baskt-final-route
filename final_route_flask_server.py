@@ -28,6 +28,7 @@ def final_route():
     locations = []
     time_windows = []
     cold_deliveries = []
+    hub_indexes = []
     order_ids = []
 
     params_json = request.get_json()
@@ -37,11 +38,8 @@ def final_route():
     else:
         return ResultCode(False, 'Missed required parameter "orders"').as_json_string()
 
-    if 'hub' in params_json:
-        hub = params_json['hub']
-        locations.append((hub['latitude'], hub['longitude']))
-        time_windows.append((hub['fromTime'], hub['toTime']))
-        order_ids.append('')
+    if 'hubs' in params_json:
+        hubs = params_json['hubs']
     else:
         return ResultCode(False, 'Missed required parameter "hub"').as_json_string()
 
@@ -61,7 +59,7 @@ def final_route():
         num_vehicles = hardcoded.max_vehicles_hardcoded()
 
     if 'with_print' in params_json:
-        with_print = params_json['with_print'] == 'true'
+        with_print = params_json['with_print']
     else:
         with_print = False
 
@@ -71,14 +69,31 @@ def final_route():
     # cold_deliveries = json.loads(cold_deliveries)
     # num_vehicles = int(num_vehicles)
 
+    vehicles_per_hub = int(num_vehicles / len(hubs)) + 1
+    print("vehicles_per_hub", vehicles_per_hub)
+    for j in range(vehicles_per_hub):
+        for i in range(len(hubs)):
+            if j * len(hubs) + i >= num_vehicles:
+                break
+            hub = hubs[i]
+            locations.append((hub['latitude'], hub['longitude']))
+            time_windows.append((hub['fromTime'], hub['toTime']))
+            order_ids.append('')
+            hub_indexes.append(i)
+
+    if num_vehicles < len(hub_indexes):
+        num_vehicles = len(hub_indexes)
+    print("hub_indexes", hub_indexes)
+    print("num_vehicles", num_vehicles)
+
     for i in range(len(orders)):
         order = orders[i]
         order_ids.append(order['orderId'])
         locations.append((order['latitude'], order['longitude']))
         time_windows.append((order['fromTime'], order['toTime']))
         if order['isColdDelivery']:
-            # we add i + 1 index because 0 is for hub
-            cold_deliveries.append(i + 1)
+            # we add i + <hubs size> index because first locations for hubs
+            cold_deliveries.append(i + len(hub_indexes))
 
     # for i in range(len(locations)):
     #     locations[i] = tuple(locations[i])
@@ -91,7 +106,7 @@ def final_route():
     print(shops)
     print(cold_deliveries)
 
-    result = fr.create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes)
     if not result.successful:
         return result
 

@@ -10,20 +10,26 @@ Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route with pa
 ##### _payload_
 
 - **orders** - _Required._  array of order objects. Object consist of:
-    - orderId - string with order id, f. e. `"0b137cb1-1"`
-    - latitude - coordinate of the destination, f. e.`39.3019488`
-    - longitude - coordinate of the destination, f. e. `-76.60290979999999`
-    - fromTime - upper bound for delivery in format`"HH:MM PM"`, f. e. `"04:00 PM"`
+    - orderId - string with order id, f. e. `"0b137cb1-1"`.
+    - latitude - coordinate of the destination, f. e.`39.3019488`.
+    - longitude - coordinate of the destination, f. e. `-76.60290979999999`.
+    - fromTime - upper bound for delivery in format`"HH:MM PM"`, f. e. `"04:00 PM"`.
     - toTime - lower bound for delivery in format`"HH:MM PM"`, f. e.  `"06:00 PM"`. 
     - isColdDelivery - `true` or `false`. 
     If `true` routing will adds pickup from shop destination within one hour delivery time from shop to target destination.
 - **shops** - _Required._ Array of shop objects. 
 Among passed shops routing algo will search the nearest pickup point for cold deliveries.
-    - shopId - id, string, f. e. `"24ce6075-394d-4b78-845d-48b58736d934"`
-    - latitude - coordinate of the shop, f. e.`39.3019488`
-    - longitude - coordinate of the shop, f. e. `-76.60290979999999`
+    - shopId - id, string, f. e. `"24ce6075-394d-4b78-845d-48b58736d934"`.
+    - latitude - coordinate of the shop, f. e.`39.3019488`.
+    - longitude - coordinate of the shop, f. e. `-76.60290979999999`.
+- **hubs** - _Required._ Array of hub objects. From hubs routes will starts. If number of vehicles is less
+ than number of hubs it will be increased to number of hubs.
+    - latitude - coordinate of the hub, f. e.`39.3019488`.
+    - longitude - coordinate of the hub, f. e. `-76.60290979999999`.
+    - fromTime - upper bound of hub working time in format`"HH:MM PM"`, f. e. `"04:00 PM"`.
+    - toTime - lower bound hub working time in format`"HH:MM PM"`, f. e.  `"06:00 PM"`. 
 - **num_vehicles** - Number of available vehicles. Default is `20`.
-- **with_print** - If `'true'` to each route in the result adds field `'route_string' `with full description of the route.
+- **with_print** - If `true` to each route in the result adds field `'route_string' `with full description of the route.
 
       
 **Important!** For Hub you should to specify start and end time of Gig or interval for work. 
@@ -131,13 +137,15 @@ Json with routes description
             "longitude":-76.6211893
         }
     ],
-    "hub":{
-        "latitude":39.2908045,
-        "longitude":-76.66135799999999,
-        "fromTime":"09:00 AM",
-        "toTime":"10:00 PM"
-    },
-    "with_print":"false",
+    "hubs":[
+        {
+            "latitude":39.2908045,
+            "longitude":-76.66135799999999,
+            "fromTime":"09:00 AM",
+            "toTime":"10:00 PM"
+        }
+    ],
+    "with_print":false,
     "num_vehicles":4
 }
 

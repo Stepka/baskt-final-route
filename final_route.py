@@ -56,15 +56,17 @@ def add_pickups_for_cold_deliveries(gclient,
     return ResultCode(True, pickup_deliver)
 
 
-def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles):
+def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes):
     '''
     Initialize all the variables.
 
     :param locations:
     :param time_windows:
+    :param order_ids:
     :param shops:
     :param cold_deliveries:
     :param num_vehicles:
+    :param hub_indexes:
     :return:
     '''
 
@@ -78,8 +80,11 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
         convert_addresses_to_coordinates(data['locations'], gclient)
     data["time_windows"] = conv_time(time_windows)
     data['order_ids'] = order_ids
+    data['starts'] = hub_indexes
+    data['ends'] = hub_indexes
     data['types'] = ['delivery' for _ in locations]
-    data['types'][0] = 'start'
+    for i in hub_indexes:
+        data['types'][i] = 'start'
 
     result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['addresses'], data['order_ids'],
                                              data['time_windows'], data['types'], shops, cold_deliveries)
@@ -493,7 +498,11 @@ def calculate_routes(data_model, with_print=True):
     '''
 
     manager = pywrapcp.RoutingIndexManager(
-        len(data_model['time_matrix']), data_model['num_vehicles'], data_model['depot'])
+        len(data_model['time_matrix']),
+        data_model['num_vehicles'],
+        data_model['starts'],
+        data_model['ends']
+    )
     routing = pywrapcp.RoutingModel(manager)
 
     def distance_callback(from_index, to_index):

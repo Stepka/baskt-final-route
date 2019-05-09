@@ -9,6 +9,8 @@ DEFAULT_TIME_WINDOW = ("09:00 AM", "10:00 PM")
 def time_windows_hardcoded():
     time = [
         DEFAULT_TIME_WINDOW,   # departure from hub time
+        DEFAULT_TIME_WINDOW,   # departure from hub time
+        DEFAULT_TIME_WINDOW,   # departure from hub time
         ("04:00 PM", "06:00 PM"),
         ("03:00 PM", "04:00 PM"),
         DEFAULT_TIME_WINDOW,
@@ -48,7 +50,9 @@ def time_windows_hardcoded():
 def locations_hardcoded():
     # Array of locations (lat, lng)
     locations = [
-        (39.2908045, -76.66135799999999),  # warehouse, hub
+        (39.2908045, -76.66135799999999),  # warehouse, hub,
+        (39.312422299999994, -76.61839559999999),  # warehouse, hub,
+        (39.3281407, -76.59497089999999),  # warehouse, hub,
         (39.3019488, -76.60290979999999),
         (39.3021398, -76.61649560000001),
         (39.3054756, -76.6211893),
@@ -139,6 +143,12 @@ def shops_hardcoded():
     ]
 
     return shops
+
+
+def hubs_hardcoded():
+    hubs = [0, 1, 2]
+
+    return hubs
 
 
 def cold_deliveries_hardcoded():

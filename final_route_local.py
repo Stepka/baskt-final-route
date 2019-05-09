@@ -11,9 +11,10 @@ if __name__ == '__main__':
     shops = hardcoded.shops_hardcoded()
     cold_deliveries = hardcoded.cold_deliveries_hardcoded()
     order_ids = hardcoded.order_ids_hardcoded()
+    hubs = hardcoded.hubs_hardcoded()
     num_vehicles = 4
 
-    result = fr.create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hubs)
     # result = create_data_model_d()
     if not result.successful:
         print(result)
