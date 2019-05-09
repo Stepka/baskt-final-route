@@ -55,7 +55,10 @@ Json with routes description
 			If driver will arrive to destination later than _to_time_ route will be break.
 			- **time_window**: target time window (_from_time_ and _to_time_ should be inside this), f.e. `["09:30 AM", "10:30 AM"]`. 
 			It is just for information.
-			- **next_destination_duration**: road time to the next destination.
+			- **delivery_time**: time from start (from Hub) to destination, in `HH:MM` format. 
+			Note, that you should add time between when order was placed and start time 
+			from hub to control total delivery time. I. e. total time = (time from order was placed to driver's start from hub) + returned from API time.
+			- **next_destination_duration**: road time to the next destination in `HH:MM` format.
 		- **route_duration**: total duration of the route in `HH:MM` format.
 
 #### Examples
@@ -147,6 +150,80 @@ Json with routes description
     "body":{
         "routes":[
             {
+                "description":"Route for vehicle 0",
+                "destinations":[
+                    {
+                        "index":0,
+                        "type":"start",
+                        "order_id":"",
+                        "location":[
+                            39.2908045,
+                            -76.66135799999999
+                        ],
+                        "address":"",
+                        "from_time":"09:00 AM",
+                        "to_time":"09:00 AM",
+                        "time_window":[
+                            "09:00 AM",
+                            "10:00 PM"
+                        ],
+                        "next_destination_duration":"0:25"
+                    },
+                    {
+                        "index":5,
+                        "type":"delivery",
+                        "order_id":"0b137cb1-5",
+                        "location":[
+                            39.353636,
+                            -76.63003789999999
+                        ],
+                        "address":"",
+                        "from_time":"09:25 AM",
+                        "to_time":"09:25 AM",
+                        "time_window":[
+                            "09:00 AM",
+                            "10:00 PM"
+                        ],
+                        "delivery_time":"0:25",
+                        "next_destination_duration":"0:08"
+                    },
+                    {
+                        "index":3,
+                        "type":"delivery",
+                        "order_id":"0b137cb1-3",
+                        "location":[
+                            39.3054756,
+                            -76.6211893
+                        ],
+                        "address":"",
+                        "from_time":"09:33 AM",
+                        "to_time":"09:33 AM",
+                        "time_window":[
+                            "09:00 AM",
+                            "10:00 PM"
+                        ],
+                        "delivery_time":"0:33",
+                        "next_destination_duration":"0:07"
+                    },
+                    {
+                        "index":0,
+                        "order_id":"",
+                        "location":[
+                            39.2908045,
+                            -76.66135799999999
+                        ],
+                        "address":"",
+                        "from_time":"09:40 AM",
+                        "to_time":"09:40 AM",
+                        "time_window":[
+                            "09:00 AM",
+                            "10:00 PM"
+                        ]
+                    }
+                ],
+                "route_duration":"0:40"
+            },
+            {
                 "description":"Route for vehicle 1",
                 "destinations":[
                     {
@@ -164,7 +241,25 @@ Json with routes description
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "next_destination_duration":7
+                        "next_destination_duration":"0:04"
+                    },
+                    {
+                        "index":4,
+                        "type":"delivery",
+                        "order_id":"0b137cb1-4",
+                        "location":[
+                            39.2815397,
+                            -76.6549007
+                        ],
+                        "address":"",
+                        "from_time":"09:04 AM",
+                        "to_time":"09:21 AM",
+                        "time_window":[
+                            "09:00 AM",
+                            "10:00 PM"
+                        ],
+                        "delivery_time":"0:04",
+                        "next_destination_duration":"0:08"
                     },
                     {
                         "index":8,
@@ -175,13 +270,14 @@ Json with routes description
                             -76.6211893
                         ],
                         "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
-                        "from_time":"09:07 AM",
+                        "from_time":"09:12 AM",
                         "to_time":"09:29 AM",
                         "time_window":[
                             "09:00 AM",
                             "09:00 PM"
                         ],
-                        "next_destination_duration":1
+                        "delivery_time":"0:12",
+                        "next_destination_duration":"0:01"
                     },
                     {
                         "index":9,
@@ -192,13 +288,14 @@ Json with routes description
                             -76.6211893
                         ],
                         "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
-                        "from_time":"09:08 AM",
+                        "from_time":"09:13 AM",
                         "to_time":"09:30 AM",
                         "time_window":[
                             "09:00 AM",
                             "09:30 AM"
                         ],
-                        "next_destination_duration":5
+                        "delivery_time":"0:13",
+                        "next_destination_duration":"0:03"
                     },
                     {
                         "index":7,
@@ -215,7 +312,8 @@ Json with routes description
                             "09:30 AM",
                             "10:30 AM"
                         ],
-                        "next_destination_duration":2
+                        "delivery_time":"0:30",
+                        "next_destination_duration":"0:02"
                     },
                     {
                         "index":2,
@@ -227,29 +325,13 @@ Json with routes description
                         ],
                         "address":"",
                         "from_time":"03:00 PM",
-                        "to_time":"03:55 PM",
+                        "to_time":"03:57 PM",
                         "time_window":[
                             "03:00 PM",
                             "04:00 PM"
                         ],
-                        "next_destination_duration":4
-                    },
-                    {
-                        "index":6,
-                        "type":"delivery",
-                        "order_id":"0b137cb1-6",
-                        "location":[
-                            39.3019488,
-                            -76.60290979999999
-                        ],
-                        "address":"",
-                        "from_time":"03:04 PM",
-                        "to_time":"03:59 PM",
-                        "time_window":[
-                            "09:00 AM",
-                            "10:00 PM"
-                        ],
-                        "next_destination_duration":1
+                        "delivery_time":"6:00",
+                        "next_destination_duration":"0:03"
                     },
                     {
                         "index":1,
@@ -266,24 +348,26 @@ Json with routes description
                             "04:00 PM",
                             "06:00 PM"
                         ],
-                        "next_destination_duration":10
+                        "delivery_time":"7:00",
+                        "next_destination_duration":"0:01"
                     },
                     {
-                        "index":4,
+                        "index":6,
                         "type":"delivery",
-                        "order_id":"0b137cb1-4",
+                        "order_id":"0b137cb1-6",
                         "location":[
-                            39.2815397,
-                            -76.6549007
+                            39.3019488,
+                            -76.60290979999999
                         ],
                         "address":"",
-                        "from_time":"04:10 PM",
-                        "to_time":"04:10 PM",
+                        "from_time":"04:01 PM",
+                        "to_time":"04:01 PM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "next_destination_duration":3
+                        "delivery_time":"7:01",
+                        "next_destination_duration":"0:08"
                     },
                     {
                         "index":0,
@@ -293,87 +377,15 @@ Json with routes description
                             -76.66135799999999
                         ],
                         "address":"",
-                        "from_time":"04:13 PM",
-                        "to_time":"04:13 PM",
+                        "from_time":"04:09 PM",
+                        "to_time":"04:09 PM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ]
                     }
                 ],
-                "route_duration":"7:13"
-            },
-            {
-                "description":"Route for vehicle 2",
-                "destinations":[
-                    {
-                        "index":0,
-                        "type":"start",
-                        "order_id":"",
-                        "location":[
-                            39.2908045,
-                            -76.66135799999999
-                        ],
-                        "address":"",
-                        "from_time":"09:00 AM",
-                        "to_time":"09:00 AM",
-                        "time_window":[
-                            "09:00 AM",
-                            "10:00 PM"
-                        ],
-                        "next_destination_duration":15
-                    },
-                    {
-                        "index":5,
-                        "type":"delivery",
-                        "order_id":"0b137cb1-5",
-                        "location":[
-                            39.353636,
-                            -76.63003789999999
-                        ],
-                        "address":"",
-                        "from_time":"09:15 AM",
-                        "to_time":"09:15 AM",
-                        "time_window":[
-                            "09:00 AM",
-                            "10:00 PM"
-                        ],
-                        "next_destination_duration":9
-                    },
-                    {
-                        "index":3,
-                        "type":"delivery",
-                        "order_id":"0b137cb1-3",
-                        "location":[
-                            39.3054756,
-                            -76.6211893
-                        ],
-                        "address":"",
-                        "from_time":"09:24 AM",
-                        "to_time":"09:24 AM",
-                        "time_window":[
-                            "09:00 AM",
-                            "10:00 PM"
-                        ],
-                        "next_destination_duration":8
-                    },
-                    {
-                        "index":0,
-                        "order_id":"",
-                        "location":[
-                            39.2908045,
-                            -76.66135799999999
-                        ],
-                        "address":"",
-                        "from_time":"09:32 AM",
-                        "to_time":"09:32 AM",
-                        "time_window":[
-                            "09:00 AM",
-                            "10:00 PM"
-                        ]
-                    }
-                ],
-                "route_duration":"0:32"
+                "route_duration":"7:09"
             }
         ]
     }

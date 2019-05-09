@@ -433,10 +433,14 @@ def parse_solution(data, manager, routing, assignment, with_print):
             destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
             time_window = data['time_windows'][destination['index']]
             destination['time_window'] = (conv_minutes_to_time(time_window[0]), conv_minutes_to_time(time_window[1]))
+            delivery_time = assignment.Min(time_var) - assignment.Min(start_time_var)
+            if delivery_time > 0:
+                destination['delivery_time'] = str(timedelta(minutes=delivery_time))[:-3]
 
             previous_index = index
             index = assignment.Value(routing.NextVar(index))
-            destination['next_destination_duration'] = routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+            next_destination_duration = routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+            destination['next_destination_duration'] = str(timedelta(minutes=next_destination_duration))[:-3]
 
             plan_output += ' {0} for {1} [{2}, {3}] \n ... {4} min -> '.format(destination['type'],
                                                                                destination['order_id'],
@@ -449,6 +453,7 @@ def parse_solution(data, manager, routing, assignment, with_print):
         time_var = time_dimension.CumulVar(index)
         destination = {}
         destination['index'] = manager.IndexToNode(index)
+        destination['type'] = 'finish'
         destination['order_id'] = data['order_ids'][destination['index']]
         destination['location'] = data['locations'][destination['index']]
         destination['address'] = data['addresses'][destination['index']]
