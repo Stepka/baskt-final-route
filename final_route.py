@@ -132,20 +132,11 @@ def conv_time(time_arr):
     return time_list
 
 
-def convert_to_24(datestr): 
-    if datestr[-2:] == "AM" and datestr[:2] == "12": 
-        return int(datestr[3:6])
-          
-    # remove the AM     
-    elif datestr[-2:] == "AM": 
-        return int(datestr[:2])*60 + int(datestr[3:6])
-        
-    elif datestr[-2:] == "PM" and datestr[:2] == "12": 
-        return int(datestr[:2])*60 + int(datestr[3:6])
-          
-    else:        
-        # add 12 to hours and remove PM 
-        return (int(datestr[:2]) + 12)*60 + int(datestr[3:6])
+def convert_to_24(datestr):
+    in_time = datetime.strptime(datestr, "%I:%M %p")
+    out_time = datetime.strftime(in_time, "%H:%M")
+
+    return int(out_time[:2])*60 + int(out_time[-2:])
 
 
 def conv_minutes_to_time(minutes):
