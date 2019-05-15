@@ -67,6 +67,8 @@ Json with routes description
 			from hub to control total delivery time. I. e. total time = (time from order was placed to driver's start from hub) + returned from API time.
 			- **next_destination_duration**: road time to the next destination in `HH:MM` format.
 		- **route_duration**: total duration of the route in `HH:MM` format.
+- **errors**: an array of errors occurred with API call. Each error represented as simple string.
+- **warnings**: an array of warnings occurred with API call. Each warning represented as simple string.
 
 #### Examples
 - **payload**: 
@@ -397,7 +399,9 @@ Json with routes description
                 "route_duration":"7:09"
             }
         ]
-    }
+    },
+    "errors": [],
+    "warnings": []
 }
 
 ```
