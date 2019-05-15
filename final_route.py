@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import json
 
+import sys
 from ortools.constraint_solver import routing_enums_pb2
 from ortools.constraint_solver import pywrapcp
 import googlemaps
@@ -16,12 +17,14 @@ MAX_ROUTE_DURATION = 4 * 60
 
 # Helper class to convert a DynamoDB item to JSON.
 class ResultCode:
-    def __init__(self, is_successful, body=None):
+    def __init__(self, is_successful, body=None, errors=[], warnings=[]):
         self.successful = is_successful
         self.body = body
+        self.errors = errors
+        self.warnings = warnings
 
     def as_json_string(self):
-        result = {'successful': self.successful, 'body': self.body}
+        result = {'successful': self.successful, 'body': self.body, 'errors': self.errors, 'warnings': self.warnings}
         return json.dumps(result)
 
 
@@ -45,15 +48,17 @@ def add_pickups_for_cold_deliveries(gclient,
     '''
     
     loc_length = len(locations)
+    warnings = []
     result = one_hour(gclient, locations, addresses, order_ids, time_windows, types,
                       shops_arr, dest_arr, MAX_COLD_DELIVERY_MINUTES)
+    warnings.extend(result.warnings)
     if not result.successful:
         return result
 
     pickup_deliver = []
     for i in range(len(dest_arr)):
         pickup_deliver.append([loc_length+i, dest_arr[i]])
-    return ResultCode(True, pickup_deliver)
+    return ResultCode(True, pickup_deliver, [], warnings)
 
 
 def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes):
@@ -71,7 +76,10 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
     '''
 
     gclient = googlemaps.Client(key='AIzaSyAei-_KeQOTzjN_6sIPuQ3yW4MlRk0MtXk')
-    
+
+    errors = []
+    warnings = []
+
     data = {}
     data['locations'] = locations
     data['addresses'] = ['' for _ in locations]
@@ -88,7 +96,8 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
 
     result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['addresses'], data['order_ids'],
                                              data['time_windows'], data['types'], shops, cold_deliveries)
-
+    errors.extend(result.errors)
+    warnings.extend(result.warnings)
     if not result.successful:
         return result
     data['cold_deliveries'] = result.body
@@ -96,6 +105,8 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
     print("distance_matrix starts...", len(data['locations']))
 
     result = func_dist_mat(data['locations'], gclient)
+    errors.extend(result.errors)
+    warnings.extend(result.warnings)
     if not result.successful:
         return result
     data['distance_matrix'] = result.body
@@ -113,7 +124,7 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
     data['depot'] = 0
     print("data ready")
 
-    return ResultCode(True, data)
+    return ResultCode(True, data, errors, warnings)
 
 
 # ******************************************************************************************
@@ -200,6 +211,7 @@ def func_dist_mat(loc, gclient):
     # Create the distance between locations matrix array.
     size = len(loc)
     dist_mat = [0] * size
+    warnings = []
     for from_node in range(size):
         dist_mat[from_node] = [0] * size
         for to_node in range(size):
@@ -215,10 +227,15 @@ def func_dist_mat(loc, gclient):
 
             result = gmaps_dist(gclient, x1, y1, x2, y2)
             if not result.successful:
-                return result
-            dist_mat[from_node][to_node] = result.body
+                # return result
+                # we decide error on this step as warning - just set maximum distance to error point
+                warnings.extend(result.errors)
+                warnings.extend(result.warnings)
+                dist_mat[from_node][to_node] = sys.maxsize
+            else:
+                dist_mat[from_node][to_node] = result.body
 
-    return ResultCode(True, dist_mat)
+    return ResultCode(True, dist_mat, [], warnings)
 
 
 def gmaps_dist(gclient, x1, y1,
@@ -235,21 +252,20 @@ def gmaps_dist(gclient, x1, y1,
                                     mode='driving', traffic_model="pessimistic")
 
     if dist2['rows'][0]['elements'][0]['status'] != 'OK':
-        returned_message = "couldn't get distance between {} and {} " \
-                       "must be a server issue or a problem " \
-                       "with the geocodes of origin or destination".format(origin, dest)
+        returned_message = "Couldn't get distance between {} and {} can be a problem with the geocodes of origin or " \
+                           "destination or a server issue.".format(origin, dest)
         print(returned_message)
         print("the output is ", dist2)
         # exit()
-        return ResultCode(False, returned_message)
+        return ResultCode(False, "", [returned_message])
 
     if dist1['rows'][0]['elements'][0]['status'] != 'OK':
-        returned_message = "couldn't get distance between {} and {} must be a server " \
-                           "issue or a problem with the geocodes of origin or destination".format(origin, dest)
+        returned_message = "Couldn't get distance between {} and {} can be a problem with the geocodes of origin or " \
+                           "destination or a server issue.".format(origin, dest)
         print(returned_message)
         print("the output is ", dist1)
         # exit()
-        return ResultCode(False, returned_message)
+        return ResultCode(False, "", [returned_message])
 
     dist2 = dist2['rows'][0]['elements'][0]['distance']['value']
     dist1 = dist1['rows'][0]['elements'][0]['distance']['value']
@@ -285,13 +301,12 @@ def one_hour_dist(gclient,
 
     if dist['rows'][0]['elements'][0]['status'] != 'OK':
 
-        returned_message = "couldn't get distance between {} and {} " \
-                           "must be a server issue or a problem with the " \
-                           "geocodes of origin or destination".format(shop, dest)
+        returned_message = "Couldn't get distance between {} and {} can be a problem with the geocodes of origin or " \
+                           "destination or a server issue.".format(shop, dest)
         print(returned_message)
         print("the output is ", dist)
         # exit()
-        result = ResultCode(False, returned_message)
+        result = ResultCode(False, "", [returned_message])
         return result
     else:
         #           estimated distance between them                  ,  shop's address         ,         estimated time between them.
@@ -319,19 +334,23 @@ def one_hour(gclient,
     # all pickups should be after depot start time
     depot_start_time = time_windows[0][0]
 
+    warnings = []
     for i in dest_arr:
         dest = locations[i]
         # print("check destination: {}".format(dest))
         for shop in shops_arr:
             result = one_hour_dist(gclient, (shop['latitude'], shop['longitude']), dest)
             if not result.successful:
-                return result
-            dist, address, dur = result.body
-            if least_dist > dist:
-                least_dist = dist
-                shop_id = shop['shopId']
-                closest = address
-                duration = dur
+                # return result
+                # we decide error on this step as warning - just add warning
+                warnings.extend(result.errors)
+            else:
+                dist, address, dur = result.body
+                if least_dist > dist:
+                    least_dist = dist
+                    shop_id = shop['shopId']
+                    closest = address
+                    duration = dur
 
         print('closets is {}, distance: {}, duration: {}'.format(closest, least_dist, duration))
         # coords = gclient.geocode(closest)
@@ -348,7 +367,7 @@ def one_hour(gclient,
                                "destination: {}".format(max_delivery_minutes, duration, closest, dest)
             print(returned_message)
             # exit()
-            result = ResultCode(False, returned_message)
+            result = ResultCode(False, "", [returned_message], warnings)
             return result
         # expand shop time such that the upper bound on the shop time is location's lower bound -
         # time between them and shop's lower bound is shop upper bound - one hour
@@ -371,7 +390,7 @@ def one_hour(gclient,
         order_ids.append(order_ids[i])
         types.append('pickup')
 
-    return ResultCode(True)
+    return ResultCode(True, "", [], warnings)
 
 
 # ***************************************************************************************
@@ -612,5 +631,5 @@ def calculate_routes(data_model, with_print=True):
         solution_json, solution_str = parse_solution(data_model, manager, routing, assignment, with_print)
         return ResultCode(True, solution_json), solution_str
     else:
-        return ResultCode(False, "no assignment"), "no assignment"
+        return ResultCode(False, "", ["no assignment"]), "no assignment"
 

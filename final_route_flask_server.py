@@ -24,101 +24,113 @@ def final_route():
     Here is API method for get some result with this script
     :return:
     '''
+    try:
+        locations = []
+        time_windows = []
+        cold_deliveries = []
+        hub_indexes = []
+        order_ids = []
 
-    locations = []
-    time_windows = []
-    cold_deliveries = []
-    hub_indexes = []
-    order_ids = []
+        params_json = request.get_json()
 
-    params_json = request.get_json()
+        if 'orders' in params_json:
+            orders = params_json['orders']
+        else:
+            return ResultCode(False, '', ['Missed required parameter "orders"']).as_json_string()
 
-    if 'orders' in params_json:
-        orders = params_json['orders']
-    else:
-        return ResultCode(False, 'Missed required parameter "orders"').as_json_string()
+        if 'hubs' in params_json:
+            hubs = params_json['hubs']
+        else:
+            return ResultCode(False, '', ['Missed required parameter "hubs"']).as_json_string()
 
-    if 'hubs' in params_json:
-        hubs = params_json['hubs']
-    else:
-        return ResultCode(False, 'Missed required parameter "hubs"').as_json_string()
+        if 'shops' in params_json:
+            shops = params_json['shops']
+        else:
+            return ResultCode(False, '', ['Missed required parameter "shops"']).as_json_string()
 
-    if 'shops' in params_json:
-        shops = params_json['shops']
-    else:
-        return ResultCode(False, 'Missed required parameter "shops"').as_json_string()
+        # if 'cold_deliveries' in params_json:
+        #     cold_deliveries = params_json['cold_deliveries']
+        # else:
+        #     cold_deliveries = []
 
-    # if 'cold_deliveries' in params_json:
-    #     cold_deliveries = params_json['cold_deliveries']
-    # else:
-    #     cold_deliveries = []
+        if 'num_vehicles' in params_json:
+            num_vehicles = params_json['num_vehicles']
+        else:
+            num_vehicles = hardcoded.max_vehicles_hardcoded()
 
-    if 'num_vehicles' in params_json:
-        num_vehicles = params_json['num_vehicles']
-    else:
-        num_vehicles = hardcoded.max_vehicles_hardcoded()
+        if 'with_print' in params_json:
+            with_print = params_json['with_print']
+        else:
+            with_print = False
 
-    if 'with_print' in params_json:
-        with_print = params_json['with_print']
-    else:
-        with_print = False
+        # locations = json.loads(locations)
+        # time_windows = json.loads(time_windows)
+        # shops = json.loads(shops)
+        # cold_deliveries = json.loads(cold_deliveries)
+        # num_vehicles = int(num_vehicles)
 
-    # locations = json.loads(locations)
-    # time_windows = json.loads(time_windows)
-    # shops = json.loads(shops)
-    # cold_deliveries = json.loads(cold_deliveries)
-    # num_vehicles = int(num_vehicles)
+        if num_vehicles < len(hubs):
+            num_vehicles = len(hubs)
 
-    if num_vehicles < len(hubs):
-        num_vehicles = len(hubs)
+        vehicles_per_hub = int(num_vehicles / len(hubs))
+        print("vehicles_per_hub", vehicles_per_hub)
+        for j in range(vehicles_per_hub + 1):
+            for i in range(len(hubs)):
+                if j * len(hubs) + i >= num_vehicles:
+                    break
 
-    vehicles_per_hub = int(num_vehicles / len(hubs))
-    print("vehicles_per_hub", vehicles_per_hub)
-    for j in range(vehicles_per_hub + 1):
-        for i in range(len(hubs)):
-            if j * len(hubs) + i >= num_vehicles:
-                break
+                # add hub to locations only once
+                if j == 0:
+                    hub = hubs[i]
+                    locations.append((hub['latitude'], hub['longitude']))
+                    time_windows.append((hub['fromTime'], hub['toTime']))
+                    order_ids.append('')
 
-            # add hub to locations only once
-            if j == 0:
-                hub = hubs[i]
-                locations.append((hub['latitude'], hub['longitude']))
-                time_windows.append((hub['fromTime'], hub['toTime']))
-                order_ids.append('')
+                hub_indexes.append(i)
 
-            hub_indexes.append(i)
+        print("hub_indexes", hub_indexes)
+        print("num_vehicles", num_vehicles)
 
-    print("hub_indexes", hub_indexes)
-    print("num_vehicles", num_vehicles)
+        for i in range(len(orders)):
+            order = orders[i]
+            order_ids.append(order['orderId'])
+            locations.append((order['latitude'], order['longitude']))
+            time_windows.append((order['fromTime'], order['toTime']))
+            if order['isColdDelivery']:
+                # we add i + <hubs size> index because first locations for hubs
+                cold_deliveries.append(i + len(hubs))
 
-    for i in range(len(orders)):
-        order = orders[i]
-        order_ids.append(order['orderId'])
-        locations.append((order['latitude'], order['longitude']))
-        time_windows.append((order['fromTime'], order['toTime']))
-        if order['isColdDelivery']:
-            # we add i + <hubs size> index because first locations for hubs
-            cold_deliveries.append(i + len(hubs))
+        # for i in range(len(locations)):
+        #     locations[i] = tuple(locations[i])
+        # for i in range(len(time_windows)):
+        #     time_windows[i] = tuple(time_windows[i])
 
-    # for i in range(len(locations)):
-    #     locations[i] = tuple(locations[i])
-    # for i in range(len(time_windows)):
-    #     time_windows[i] = tuple(time_windows[i])
+        print(locations)
+        print(time_windows)
+        print(order_ids)
+        print(shops)
+        print(cold_deliveries)
 
-    print(locations)
-    print(time_windows)
-    print(order_ids)
-    print(shops)
-    print(cold_deliveries)
+        errors = []
+        warnings = []
+        result = fr.create_data_model(locations, time_windows, order_ids, shops,
+                                      cold_deliveries, num_vehicles, hub_indexes)
 
-    result = fr.create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes)
-    if not result.successful:
-        return result
+        errors.extend(result.errors)
+        warnings.extend(result.warnings)
+        if not result.successful:
+            return result.as_json_string()
 
-    data = result.body
+        data = result.body
 
-    result, _ = fr.calculate_routes(data, with_print)
-    return result.as_json_string()
+        result, _ = fr.calculate_routes(data, with_print)
+        result.errors.extend(errors)
+        result.warnings.extend(warnings)
+        return result.as_json_string()
+
+    except Exception as ex:
+        error = "Exception '{}' caught, details: {}".format(type(ex).__name__, str(ex))
+        return ResultCode(False, "", [error]).as_json_string()
 
 
 @app.route("/final_route/debug")
