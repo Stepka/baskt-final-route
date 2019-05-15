@@ -146,7 +146,7 @@ def shops_hardcoded():
 
 
 def hubs_hardcoded():
-    hubs = [0, 1, 2]
+    hubs = [0, 1, 2, 0, 1, 2]
 
     return hubs
 
@@ -161,19 +161,21 @@ def cold_deliveries_hardcoded():
 def order_ids_hardcoded():
     order_ids = [
         "",
-        "order 2",
-        "order 3",
+        "",
+        "",
         "order 4",
         "order 5",
         "order 6",
         "order 7",
-        "order 8"
+        "order 8",
+        "order 1",
+        "order 2"
     ]
     return order_ids
 
 
 def max_vehicles_hardcoded():
-    return 20
+    return 6
 
 
 if __name__ == '__main__':

@@ -140,11 +140,13 @@ def final_route_debug():
     locations = hardcoded.locations_hardcoded()
     time_windows = hardcoded.time_windows_hardcoded()
     shops = hardcoded.shops_hardcoded()
-    destinations = hardcoded.cold_deliveries_hardcoded()
+    cold_deliveries = hardcoded.cold_deliveries_hardcoded()
     order_ids = hardcoded.order_ids_hardcoded()
     num_vehicles = hardcoded.max_vehicles_hardcoded()
+    hub_indexes = hardcoded.hubs_hardcoded()
 
-    result = fr.create_data_model(locations, time_windows, order_ids, shops, destinations, num_vehicles)
+    result = fr.create_data_model(locations, time_windows, order_ids, shops,
+                                  cold_deliveries, num_vehicles, hub_indexes)
     # result = create_data_model_d()
     if not result.successful:
         return result
