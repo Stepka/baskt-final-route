@@ -17,10 +17,14 @@ MAX_ROUTE_DURATION = 4 * 60
 
 # Helper class to convert a DynamoDB item to JSON.
 class ResultCode:
-    def __init__(self, is_successful, body=None, errors=[], warnings=[]):
+    def __init__(self, is_successful, body=None, errors=None, warnings=None):
         self.successful = is_successful
         self.body = body
+        if errors is None:
+            errors = []
         self.errors = errors
+        if warnings is None:
+            warnings = []
         self.warnings = warnings
 
     def as_json_string(self):
