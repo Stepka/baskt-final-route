@@ -33,6 +33,8 @@ def final_route():
 
         params_json = request.get_json()
 
+        print("payload:", params_json)
+
         if 'orders' in params_json:
             orders = params_json['orders']
         else:
@@ -73,7 +75,6 @@ def final_route():
             num_vehicles = len(hubs)
 
         vehicles_per_hub = int(num_vehicles / len(hubs))
-        print("vehicles_per_hub", vehicles_per_hub)
         for j in range(vehicles_per_hub + 1):
             for i in range(len(hubs)):
                 if j * len(hubs) + i >= num_vehicles:
@@ -87,9 +88,6 @@ def final_route():
                     order_ids.append('')
 
                 hub_indexes.append(i)
-
-        print("hub_indexes", hub_indexes)
-        print("num_vehicles", num_vehicles)
 
         for i in range(len(orders)):
             order = orders[i]
@@ -105,11 +103,12 @@ def final_route():
         # for i in range(len(time_windows)):
         #     time_windows[i] = tuple(time_windows[i])
 
-        print(locations)
-        print(time_windows)
-        print(order_ids)
-        print(shops)
-        print(cold_deliveries)
+        print("locations:", locations)
+        print("time_windows:", time_windows)
+        print("order_ids:", order_ids)
+        print("shops:", shops)
+        print("hub_indexes:", hub_indexes)
+        print("cold_deliveries:", cold_deliveries)
 
         errors = []
         warnings = []
