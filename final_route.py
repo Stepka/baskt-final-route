@@ -436,9 +436,10 @@ def parse_solution(data, manager, routing, assignment, with_print):
         vehicle_route = {}
         vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
         vehicle_route['destinations'] = []
-        index = routing.Start(vehicle_id)
+        start_index = index = routing.Start(vehicle_id)
+        previous_index = -1
+        start_time = -1
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
-        start_time_var = time_dimension.CumulVar(index)
 
         while not routing.IsEnd(index):
             time_var = time_dimension.CumulVar(index)
@@ -452,8 +453,18 @@ def parse_solution(data, manager, routing, assignment, with_print):
             destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
             time_window = data['time_windows'][destination['index']]
             destination['time_window'] = (conv_minutes_to_time(time_window[0]), conv_minutes_to_time(time_window[1]))
-            delivery_time = assignment.Min(time_var) - assignment.Min(start_time_var)
-            if delivery_time > 0:
+
+            # we should shift start time and end time of the start point closer to the next after start destination
+            if previous_index == start_index:
+                duration = routing.GetArcCostForVehicle(previous_index, index, vehicle_id)
+                start_time = assignment.Min(time_var) - duration
+                if start_time < 0:
+                    start_time = 0
+                previous_destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var) - duration)
+                previous_destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var) - duration)
+
+            if start_time >= 0:
+                delivery_time = assignment.Min(time_var) - start_time
                 destination['delivery_time'] = str(timedelta(minutes=delivery_time))[:-3]
 
             previous_index = index
@@ -467,6 +478,7 @@ def parse_solution(data, manager, routing, assignment, with_print):
                                                                                destination['to_time'],
                                                                                destination['next_destination_duration'])
             vehicle_route['destinations'].append(destination)
+            previous_destination = destination
 
         # add back to depot
         time_var = time_dimension.CumulVar(index)
@@ -486,7 +498,7 @@ def parse_solution(data, manager, routing, assignment, with_print):
         vehicle_route['destinations'].append(destination)
 
         # calculate totals for route/vehicle
-        route_duration = assignment.Min(time_var) - assignment.Min(start_time_var)
+        route_duration = assignment.Min(time_var) - start_time
         plan_output += 'Duration of the route: {}\n'.format(str(timedelta(minutes=route_duration))[:-3])
         if with_print:
             vehicle_route['route_string'] = plan_output

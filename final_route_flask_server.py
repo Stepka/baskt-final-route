@@ -7,6 +7,7 @@ from final_route import ResultCode
 import hardcoded_routes_data as hardcoded
 import sys
 import optparse
+import traceback
 
 
 app = Flask(__name__)
@@ -128,6 +129,9 @@ def final_route():
         return result.as_json_string()
 
     except Exception as ex:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, file=sys.stdout)
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
         error = "Exception '{}' caught, details: {}".format(type(ex).__name__, str(ex))
         return ResultCode(False, "", [error]).as_json_string()
 
