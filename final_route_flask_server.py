@@ -66,6 +66,11 @@ def final_route():
         else:
             with_print = False
 
+        if 'info' in params_json:
+            info = params_json['info']
+        else:
+            info = ['all']
+
         # locations = json.loads(locations)
         # time_windows = json.loads(time_windows)
         # shops = json.loads(shops)
@@ -123,10 +128,10 @@ def final_route():
 
         data = result.body
 
-        result, _ = fr.calculate_routes(data, with_print)
+        result, _ = fr.calculate_routes(data, with_print, info)
         result.errors.extend(errors)
         result.warnings.extend(warnings)
-        return result.as_json_string()
+        return result.as_json_string(info)
 
     except Exception as ex:
         exc_type, exc_value, exc_traceback = sys.exc_info()

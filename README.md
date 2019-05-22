@@ -28,6 +28,14 @@ Among passed shops routing algo will search the nearest pickup point for cold de
     - longitude - coordinate of the hub, f. e. `-76.60290979999999`.
     - fromTime - upper bound of hub working time in format`"HH:MM PM"`, f. e. `"04:00 PM"`.
     - toTime - lower bound hub working time in format`"HH:MM PM"`, f. e.  `"06:00 PM"`. 
+- **info** - Define what info should be include to result. Array of strings. 
+You can combine strings in the array. Default is `['all']`. Possible strings are: 
+    - `'all'` - include all info.
+    - `'destinations'` - include sequence of destination objects (coordinates, order info, time info, type, etc) into the routes.
+    - `'coordinates'` - include sequence of coordinates into the routes.
+    - `'errors'` - include errors object into the root of response.
+    - `'warnings'` - include warnings object into the root of response.
+    
 - **num_vehicles** - Number of available vehicles. Default is `20`.
 - **with_print** - If `true` to each route in the result adds field `'route_string' `with full description of the route. 
 Default is `false`.
@@ -66,6 +74,7 @@ Json with routes description
 			Note, that you should add time between when order was placed and start time 
 			from hub to control total delivery time. I. e. total time = (time from order was placed to driver's start from hub) + returned from API time.
 			- **next_destination_duration**: road time to the next destination in `HH:MM` format.
+		- **coordinates**: an array of coordinate pairs of the route points.
 		- **route_duration**: total duration of the route in `HH:MM` format.
 - **errors**: an array of errors occurred with API call. Each error represented as simple string.
 - **warnings**: an array of warnings occurred with API call. Each warning represented as simple string.
@@ -232,6 +241,24 @@ Json with routes description
                         ]
                     }
                 ],
+                "coordinates":[  
+                    [  
+                        39.2908045,
+                        -76.66135799999999
+                    ],
+                    [  
+                        39.353636,
+                        -76.63003789999999
+                    ],
+                    [  
+                        39.3054756,
+                        -76.6211893
+                    ],
+                    [  
+                        39.2908045,
+                        -76.66135799999999
+                    ]
+                ],
                 "route_duration":"0:40"
             },
             {
@@ -395,6 +422,44 @@ Json with routes description
                             "10:00 PM"
                         ]
                     }
+                ],
+                "coordinates":[  
+                    [  
+                        39.2908045,
+                        -76.66135799999999
+                    ],
+                    [  
+                        39.2815397,
+                        -76.6549007
+                    ],
+                    [  
+                        39.3054756,
+                        -76.6211893
+                    ],
+                    [  
+                        39.3054756,
+                        -76.6211893
+                    ], 
+                    [
+                        39.2938149,
+                        -76.6156373
+                    ],
+                    [
+                        39.3021398,
+                        -76.61649560000001
+                    ],
+                    [
+                        39.3019488,
+                        -76.60290979999999
+                    ],
+                    [
+                        39.3019488,
+                        -76.60290979999999
+                    ],
+                    [
+                        39.2908045,
+                        -76.66135799999999
+                    ]
                 ],
                 "route_duration":"7:09"
             }

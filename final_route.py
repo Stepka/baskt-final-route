@@ -27,8 +27,12 @@ class ResultCode:
             warnings = []
         self.warnings = warnings
 
-    def as_json_string(self):
-        result = {'successful': self.successful, 'body': self.body, 'errors': self.errors, 'warnings': self.warnings}
+    def as_json_string(self, info='all'):
+        result = {'successful': self.successful, 'body': self.body}
+        if 'errors' in info or 'all' in info:
+            result['errors'] = self.errors
+        if 'warnings' in info or 'all' in info:
+            result['warnings'] = self.warnings
         return json.dumps(result)
 
 
@@ -426,7 +430,7 @@ def func_speed_mat(loc, gclient):
     return speed_mat
 
 
-def parse_solution(data, manager, routing, assignment, with_print):
+def parse_solution(data, manager, routing, assignment, with_print, info='all'):
     """Prints assignment on console."""
     time_dimension = routing.GetDimensionOrDie('Time')
     total_duration = 0
@@ -435,7 +439,10 @@ def parse_solution(data, manager, routing, assignment, with_print):
     for vehicle_id in range(data['num_vehicles']):
         vehicle_route = {}
         vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
-        vehicle_route['destinations'] = []
+        if 'destinations' in info or 'all' in info:
+            vehicle_route['destinations'] = []
+        if 'coordinates' in info or 'all' in info:
+            vehicle_route['coordinates'] = []
         start_index = index = routing.Start(vehicle_id)
         previous_index = -1
         start_time = -1
@@ -477,7 +484,10 @@ def parse_solution(data, manager, routing, assignment, with_print):
                                                                                destination['from_time'],
                                                                                destination['to_time'],
                                                                                destination['next_destination_duration'])
-            vehicle_route['destinations'].append(destination)
+            if 'destinations' in info or 'all' in info:
+                vehicle_route['destinations'].append(destination)
+            if 'coordinates' in info or 'all' in info:
+                vehicle_route['coordinates'].append(destination['location'])
             previous_destination = destination
 
         # add back to depot
@@ -495,7 +505,10 @@ def parse_solution(data, manager, routing, assignment, with_print):
         plan_output += ' {0} [{1}, {2}]\n'.format(destination['order_id'],
                                                   destination['from_time'],
                                                   destination['to_time'])
-        vehicle_route['destinations'].append(destination)
+        if 'destinations' in info or 'all' in info:
+            vehicle_route['destinations'].append(destination)
+        if 'coordinates' in info or 'all' in info:
+            vehicle_route['coordinates'].append(destination['location'])
 
         # calculate totals for route/vehicle
         route_duration = assignment.Min(time_var) - start_time
@@ -504,7 +517,8 @@ def parse_solution(data, manager, routing, assignment, with_print):
             vehicle_route['route_string'] = plan_output
         vehicle_route['route_duration'] = str(timedelta(minutes=route_duration))[:-3]
 
-        if len(vehicle_route['destinations']) > 2:
+        if ('destinations' in vehicle_route and len(vehicle_route['destinations']) > 2) or \
+                ('coordinates' in vehicle_route and len(vehicle_route['coordinates']) > 2):
             result['routes'].append(vehicle_route)
 
             print_str = print_str + plan_output
@@ -515,7 +529,7 @@ def parse_solution(data, manager, routing, assignment, with_print):
     return result, print_str
 
 
-def calculate_routes(data_model, with_print=True):
+def calculate_routes(data_model, with_print=True, info='all'):
     '''
     Function to calculate routes based on passed data model. Use create_data_model() for model creation.
     :param data_model: data model created with create_data_model() function
@@ -644,7 +658,7 @@ def calculate_routes(data_model, with_print=True):
 
     # Print the solution.
     if assignment:
-        solution_json, solution_str = parse_solution(data_model, manager, routing, assignment, with_print)
+        solution_json, solution_str = parse_solution(data_model, manager, routing, assignment, with_print, info)
         return ResultCode(True, solution_json), solution_str
     else:
         return ResultCode(False, "", ["no assignment"]), "no assignment"
