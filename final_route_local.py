@@ -15,7 +15,8 @@ if __name__ == '__main__':
     hubs = hardcoded.hubs_hardcoded()
     num_vehicles = hardcoded.max_vehicles_hardcoded()
 
-    result = fr.create_data_model(locations, location_ids, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hubs)
+    result = fr.create_data_model(locations, location_ids, time_windows, order_ids, shops, cold_deliveries,
+                                  num_vehicles, hubs)
     # result = create_data_model_d()
     if not result.successful:
         print(result)

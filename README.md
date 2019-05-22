@@ -24,6 +24,7 @@ Among passed shops routing algo will search the nearest pickup point for cold de
     - longitude - coordinate of the shop, f. e. `-76.60290979999999`.
 - **hubs** - _Required._ Array of hub objects. From hubs routes will starts. If number of vehicles is less
  than number of hubs it will be increased to number of hubs.
+    - hubId - id, string, f. e. `"24ce6075-394d-4b78-845d-48b58736d934"`.
     - latitude - coordinate of the hub, f. e.`39.3019488`.
     - longitude - coordinate of the hub, f. e. `-76.60290979999999`.
     - fromTime - upper bound of hub working time in format`"HH:MM PM"`, f. e. `"04:00 PM"`.
@@ -32,11 +33,12 @@ Among passed shops routing algo will search the nearest pickup point for cold de
 You can combine strings in the array. Default is `['all']`. Possible strings are: 
     - `'all'` - include all info.
     - `'destinations'` - include sequence of destination objects (coordinates, order info, time info, type, etc) into the routes.
+    - `'addresses'` - algo will additionally call to google maps API for addresses for locations and adds addresses to destinations.
     - `'coordinates'` - include sequence of coordinates into the routes.
     - `'errors'` - include errors object into the root of response.
     - `'warnings'` - include warnings object into the root of response.
     
-- **num_vehicles** - Number of available vehicles. Default is `20`.
+- **num_vehicles** - Number of available vehicles. Default is `6`.
 - **with_print** - If `true` to each route in the result adds field `'route_string' `with full description of the route. 
 Default is `false`.
 
@@ -64,6 +66,8 @@ Json with routes description
 			- **type**: "`start`" for start from depot, "`pickup`" for picking up cold delivery from shop, "`delivery`" for delivery as target for destination.
 			- **order_id**: string with order id.
 			- **location**: array with lat long for destination, f. e. `[39.2908045, -76.66135799999999]`.
+			- **location_id**: id of the location. It can be id of the hub, shop. If destination is delivery point then id is the same as order id.
+			- **address**: address of the location.
 			- **from_time**: the earliest time to arrive to destination, f. e. `"06:00 AM"`. 
 			If driver will arrive to destination earlier than _from_time_ he should wait. 
 			- **to_time**: the latest time to arrive to the destination, f.e. `"06:00 AM"`. 
@@ -86,7 +90,7 @@ Json with routes description
 {
     "orders":[
         {
-            "orderId":"0b137cb1-1",
+            "orderId":"order-1",
             "latitude":39.3019488,
             "longitude":-76.60290979999999,
             "fromTime":"04:00 PM",
@@ -94,7 +98,7 @@ Json with routes description
             "isColdDelivery":false
         },
         {
-            "orderId":"0b137cb1-2",
+            "orderId":"order-2",
             "latitude":39.3021398,
             "longitude":-76.61649560000001,
             "fromTime":"03:00 PM",
@@ -102,7 +106,7 @@ Json with routes description
             "isColdDelivery":false
         },
         {
-            "orderId":"0b137cb1-3",
+            "orderId":"order-3",
             "latitude":39.3054756,
             "longitude":-76.6211893,
             "fromTime":"09:00 AM",
@@ -110,7 +114,7 @@ Json with routes description
             "isColdDelivery":false
         },
         {
-            "orderId":"0b137cb1-4",
+            "orderId":"order-4",
             "latitude":39.2815397,
             "longitude":-76.6549007,
             "fromTime":"09:00 AM",
@@ -118,7 +122,7 @@ Json with routes description
             "isColdDelivery":false
         },
         {
-            "orderId":"0b137cb1-5",
+            "orderId":"order-5",
             "latitude":39.353636,
             "longitude":-76.63003789999999,
             "fromTime":"09:00 AM",
@@ -126,7 +130,7 @@ Json with routes description
             "isColdDelivery":false
         },
         {
-            "orderId":"0b137cb1-6",
+            "orderId":"order-6",
             "latitude":39.3019488,
             "longitude":-76.60290979999999,
             "fromTime":"09:00 AM",
@@ -134,7 +138,7 @@ Json with routes description
             "isColdDelivery":true
         },
         {
-            "orderId":"0b137cb1-7",
+            "orderId":"order-7",
             "latitude":39.2938149,
             "longitude":-76.6156373,
             "fromTime":"09:30 AM",
@@ -144,13 +148,14 @@ Json with routes description
     ],
     "shops":[
         {
-            "shopId":"24ce6075-394d-4b78-845d-48b58736d934",
+            "shopId":"shop-1",
             "latitude":39.3054756,
             "longitude":-76.6211893
         }
     ],
     "hubs":[
         {
+            "hubId":"hub-1",
             "latitude":39.2908045,
             "longitude":-76.66135799999999,
             "fromTime":"09:00 AM",
@@ -158,6 +163,7 @@ Json with routes description
         }
     ],
     "with_print":false,
+    "info": ["all"],
     "num_vehicles":4
 }
 
@@ -180,86 +186,91 @@ Json with routes description
                             39.2908045,
                             -76.66135799999999
                         ],
-                        "address":"",
+                        "location_id":"hub-1",
+                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"09:00 AM",
                         "to_time":"09:00 AM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "next_destination_duration":"0:25"
+                        "next_destination_duration":"0:14"
                     },
                     {
                         "index":5,
                         "type":"delivery",
-                        "order_id":"0b137cb1-5",
+                        "order_id":"order-5",
                         "location":[
                             39.353636,
                             -76.63003789999999
                         ],
-                        "address":"",
-                        "from_time":"09:25 AM",
-                        "to_time":"09:25 AM",
+                        "location_id":"order-5",
+                        "address":"600 Wyndhurst Ave, Baltimore, MD 21210, USA",
+                        "from_time":"09:14 AM",
+                        "to_time":"09:14 AM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "delivery_time":"0:25",
-                        "next_destination_duration":"0:08"
+                        "delivery_time":"0:14",
+                        "next_destination_duration":"0:14"
                     },
                     {
                         "index":3,
                         "type":"delivery",
-                        "order_id":"0b137cb1-3",
+                        "order_id":"order-3",
                         "location":[
                             39.3054756,
                             -76.6211893
                         ],
-                        "address":"",
-                        "from_time":"09:33 AM",
-                        "to_time":"09:33 AM",
+                        "location_id":"order-3",
+                        "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
+                        "from_time":"09:28 AM",
+                        "to_time":"09:28 AM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "delivery_time":"0:33",
-                        "next_destination_duration":"0:07"
+                        "delivery_time":"0:28",
+                        "next_destination_duration":"0:08"
                     },
                     {
                         "index":0,
+                        "type":"finish",
                         "order_id":"",
                         "location":[
                             39.2908045,
                             -76.66135799999999
                         ],
-                        "address":"",
-                        "from_time":"09:40 AM",
-                        "to_time":"09:40 AM",
+                        "location_id":"hub-1",
+                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
+                        "from_time":"09:36 AM",
+                        "to_time":"09:36 AM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ]
                     }
                 ],
-                "coordinates":[  
-                    [  
+                "coordinates":[
+                    [
                         39.2908045,
                         -76.66135799999999
                     ],
-                    [  
+                    [
                         39.353636,
                         -76.63003789999999
                     ],
-                    [  
+                    [
                         39.3054756,
                         -76.6211893
                     ],
-                    [  
+                    [
                         39.2908045,
                         -76.66135799999999
                     ]
                 ],
-                "route_duration":"0:40"
+                "route_duration":"0:36"
             },
             {
                 "description":"Route for vehicle 1",
@@ -272,78 +283,83 @@ Json with routes description
                             39.2908045,
                             -76.66135799999999
                         ],
-                        "address":"",
+                        "location_id":"hub-1",
+                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"09:00 AM",
-                        "to_time":"09:00 AM",
+                        "to_time":"09:18 AM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "next_destination_duration":"0:04"
+                        "next_destination_duration":"0:03"
                     },
                     {
                         "index":4,
                         "type":"delivery",
-                        "order_id":"0b137cb1-4",
+                        "order_id":"order-4",
                         "location":[
                             39.2815397,
                             -76.6549007
                         ],
-                        "address":"",
-                        "from_time":"09:04 AM",
+                        "location_id":"order-4",
+                        "address":"2429 Frederick Ave, Baltimore, MD 21223, USA",
+                        "from_time":"09:03 AM",
                         "to_time":"09:21 AM",
                         "time_window":[
                             "09:00 AM",
                             "10:00 PM"
                         ],
-                        "delivery_time":"0:04",
+                        "delivery_time":"0:03",
                         "next_destination_duration":"0:08"
                     },
                     {
                         "index":8,
                         "type":"pickup",
-                        "order_id":"0b137cb1-6",
+                        "order_id":"order-6",
                         "location":[
                             39.3054756,
                             -76.6211893
                         ],
+                        "location_id":"shop-1",
                         "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
-                        "from_time":"09:12 AM",
+                        "from_time":"09:11 AM",
                         "to_time":"09:29 AM",
                         "time_window":[
                             "09:00 AM",
                             "09:00 PM"
                         ],
-                        "delivery_time":"0:12",
+                        "delivery_time":"0:11",
                         "next_destination_duration":"0:01"
                     },
                     {
                         "index":9,
                         "type":"pickup",
-                        "order_id":"0b137cb1-7",
+                        "order_id":"order-7",
                         "location":[
                             39.3054756,
                             -76.6211893
                         ],
+                        "location_id":"shop-1",
                         "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
-                        "from_time":"09:13 AM",
+                        "from_time":"09:12 AM",
                         "to_time":"09:30 AM",
                         "time_window":[
                             "09:00 AM",
                             "09:30 AM"
                         ],
-                        "delivery_time":"0:13",
+                        "delivery_time":"0:12",
                         "next_destination_duration":"0:03"
                     },
                     {
                         "index":7,
                         "type":"delivery",
-                        "order_id":"0b137cb1-7",
+                        "order_id":"order-7",
                         "location":[
                             39.2938149,
                             -76.6156373
                         ],
-                        "address":"",
+                        "location_id":"order-7",
+                        "address":"338 N Charles St, Baltimore, MD 21201, USA",
                         "from_time":"09:30 AM",
                         "to_time":"10:30 AM",
                         "time_window":[
@@ -351,19 +367,20 @@ Json with routes description
                             "10:30 AM"
                         ],
                         "delivery_time":"0:30",
-                        "next_destination_duration":"0:02"
+                        "next_destination_duration":"0:03"
                     },
                     {
                         "index":2,
                         "type":"delivery",
-                        "order_id":"0b137cb1-2",
+                        "order_id":"order-2",
                         "location":[
                             39.3021398,
                             -76.61649560000001
                         ],
-                        "address":"",
+                        "location_id":"order-2",
+                        "address":"1030 N.Charles Street, 1030 N Charles St, Baltimore, MD 21201, USA",
                         "from_time":"03:00 PM",
-                        "to_time":"03:57 PM",
+                        "to_time":"03:56 PM",
                         "time_window":[
                             "03:00 PM",
                             "04:00 PM"
@@ -372,14 +389,34 @@ Json with routes description
                         "next_destination_duration":"0:03"
                     },
                     {
-                        "index":1,
+                        "index":6,
                         "type":"delivery",
-                        "order_id":"0b137cb1-1",
+                        "order_id":"order-6",
                         "location":[
                             39.3019488,
                             -76.60290979999999
                         ],
-                        "address":"",
+                        "location_id":"order-6",
+                        "address":"1000 E Eager St, Baltimore, MD 21202, USA",
+                        "from_time":"03:03 PM",
+                        "to_time":"03:59 PM",
+                        "time_window":[
+                            "09:00 AM",
+                            "10:00 PM"
+                        ],
+                        "delivery_time":"6:03",
+                        "next_destination_duration":"0:01"
+                    },
+                    {
+                        "index":1,
+                        "type":"delivery",
+                        "order_id":"order-1",
+                        "location":[
+                            39.3019488,
+                            -76.60290979999999
+                        ],
+                        "location_id":"order-1",
+                        "address":"1000 E Eager St, Baltimore, MD 21202, USA",
                         "from_time":"04:00 PM",
                         "to_time":"04:00 PM",
                         "time_window":[
@@ -387,34 +424,18 @@ Json with routes description
                             "06:00 PM"
                         ],
                         "delivery_time":"7:00",
-                        "next_destination_duration":"0:01"
-                    },
-                    {
-                        "index":6,
-                        "type":"delivery",
-                        "order_id":"0b137cb1-6",
-                        "location":[
-                            39.3019488,
-                            -76.60290979999999
-                        ],
-                        "address":"",
-                        "from_time":"04:01 PM",
-                        "to_time":"04:01 PM",
-                        "time_window":[
-                            "09:00 AM",
-                            "10:00 PM"
-                        ],
-                        "delivery_time":"7:01",
-                        "next_destination_duration":"0:08"
+                        "next_destination_duration":"0:09"
                     },
                     {
                         "index":0,
+                        "type":"finish",
                         "order_id":"",
                         "location":[
                             39.2908045,
                             -76.66135799999999
                         ],
-                        "address":"",
+                        "location_id":"hub-1",
+                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"04:09 PM",
                         "to_time":"04:09 PM",
                         "time_window":[
@@ -423,23 +444,23 @@ Json with routes description
                         ]
                     }
                 ],
-                "coordinates":[  
-                    [  
+                "coordinates":[
+                    [
                         39.2908045,
                         -76.66135799999999
                     ],
-                    [  
+                    [
                         39.2815397,
                         -76.6549007
                     ],
-                    [  
+                    [
                         39.3054756,
                         -76.6211893
                     ],
-                    [  
+                    [
                         39.3054756,
                         -76.6211893
-                    ], 
+                    ],
                     [
                         39.2938149,
                         -76.6156373
@@ -465,8 +486,12 @@ Json with routes description
             }
         ]
     },
-    "errors": [],
-    "warnings": []
+    "errors":[
+
+    ],
+    "warnings":[
+
+    ]
 }
 
 ```

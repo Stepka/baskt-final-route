@@ -39,7 +39,6 @@ class ResultCode:
 def add_pickups_for_cold_deliveries(gclient,
                                     locations,
                                     location_ids,
-                                    addresses,
                                     order_ids,
                                     time_windows,
                                     types,
@@ -58,7 +57,7 @@ def add_pickups_for_cold_deliveries(gclient,
     
     loc_length = len(locations)
     warnings = []
-    result = one_hour(gclient, locations, location_ids, addresses, order_ids, time_windows, types,
+    result = one_hour(gclient, locations, location_ids, order_ids, time_windows, types,
                       shops_arr, dest_arr, MAX_COLD_DELIVERY_MINUTES)
     warnings.extend(result.warnings)
     if not result.successful:
@@ -70,7 +69,8 @@ def add_pickups_for_cold_deliveries(gclient,
     return ResultCode(True, pickup_deliver, [], warnings)
 
 
-def create_data_model(locations, location_ids, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes):
+def create_data_model(locations, location_ids, time_windows, order_ids, shops, cold_deliveries, num_vehicles,
+                      hub_indexes, info='all'):
     '''
     Initialize all the variables.
 
@@ -82,6 +82,7 @@ def create_data_model(locations, location_ids, time_windows, order_ids, shops, c
     :param cold_deliveries:
     :param num_vehicles:
     :param hub_indexes:
+    :param info:
     :return:
     '''
 
@@ -93,10 +94,10 @@ def create_data_model(locations, location_ids, time_windows, order_ids, shops, c
     data = {}
     data['locations'] = locations
     data['location_ids'] = location_ids
-    data['addresses'] = ['' for _ in locations]
-    if len(data['locations'][0]) == 1:
-        data['addresses'] = [i[0] for i in locations]
-        convert_addresses_to_coordinates(data['locations'], gclient)
+
+    # if len(data['locations'][0]) == 1:
+    #     data['addresses'] = [i[0] for i in locations]
+    #     convert_addresses_to_coordinates(data['locations'], gclient)
     data["time_windows"] = conv_time(time_windows)
     data['order_ids'] = order_ids
     data['starts'] = hub_indexes
@@ -105,9 +106,12 @@ def create_data_model(locations, location_ids, time_windows, order_ids, shops, c
     for i in hub_indexes:
         data['types'][i] = 'start'
 
-    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'],
-                                             data['addresses'], data['order_ids'],
+    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'], data['order_ids'],
                                              data['time_windows'], data['types'], shops, cold_deliveries)
+
+    if 'addresses' in info or 'all' in info:
+        data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
+
     errors.extend(result.errors)
     warnings.extend(result.warnings)
     if not result.successful:
@@ -302,6 +306,27 @@ def convert_addresses_to_coordinates(data, gclient):
             data[i] = (x, y)
 
 
+def get_address(gclient, location):
+    response = gclient.reverse_geocode(location)
+
+    if len(response) > 0:
+        address = response[0]['formatted_address']
+    else:
+        address = ""
+
+    return address
+
+
+def convert_coordinates_to_addresses(gclient, locations):
+    addresses = []
+    size = len(locations)
+    for i in range(size):
+        address = get_address(gclient, locations[i])
+        addresses.append(address)
+
+    return addresses
+
+
 # ***************************************************************************************
 # **************************************************************************************
 # ******************      pickup_deliver  functions ***********************************
@@ -331,7 +356,6 @@ def one_hour_dist(gclient,
 def one_hour(gclient,
              locations,
              location_ids,
-             addresses,
              order_ids,
              time_windows,
              types,
@@ -400,7 +424,7 @@ def one_hour(gclient,
         # locations.append((x_coor, y_coor))
         locations.append((shop['latitude'], shop['longitude']))
         location_ids.append(shop['shopId'])
-        addresses.append(closest)
+        # addresses.append(closest)
         order_ids.append(order_ids[i])
         types.append('pickup')
 
@@ -462,7 +486,8 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
             destination['order_id'] = data['order_ids'][destination['index']]
             destination['location'] = data['locations'][destination['index']]
             destination['location_id'] = data['location_ids'][destination['index']]
-            destination['address'] = data['addresses'][destination['index']]
+            if 'addresses' in info or 'all' in info:
+                destination['address'] = data['addresses'][destination['index']]
             destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
             destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
             time_window = data['time_windows'][destination['index']]
@@ -505,7 +530,8 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
         destination['order_id'] = data['order_ids'][destination['index']]
         destination['location'] = data['locations'][destination['index']]
         destination['location_id'] = data['location_ids'][destination['index']]
-        destination['address'] = data['addresses'][destination['index']]
+        if 'addresses' in info or 'all' in info:
+            destination['address'] = data['addresses'][destination['index']]
         destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
         destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
         time_window = data['time_windows'][destination['index']]

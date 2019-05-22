@@ -122,7 +122,7 @@ def final_route():
         errors = []
         warnings = []
         result = fr.create_data_model(locations, location_ids, time_windows, order_ids, shops,
-                                      cold_deliveries, num_vehicles, hub_indexes)
+                                      cold_deliveries, num_vehicles, hub_indexes, info)
 
         errors.extend(result.errors)
         warnings.extend(result.warnings)
@@ -165,7 +165,7 @@ def final_route_debug():
 
     data = result.body
 
-    result, _ = fr.calculate_routes(data, True)
+    result, _ = fr.calculate_routes(data, False)
     return result.as_json_string()
 
 
