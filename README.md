@@ -63,10 +63,11 @@ Json with routes description
 		- **description**: simple description of the route.
 		- **destinations**: an array of destinations.
 			- **index**: index of the destination from *locations* array.
-			- **type**: "`start`" for start from depot, "`pickup`" for picking up cold delivery from shop, "`delivery`" for delivery as target for destination.
+			- **type**: "`start`" and "`finish`" for start from depot, "`pickup`" for picking up cold delivery from shop, "`delivery`" for delivery as target for destination.
 			- **order_id**: string with order id.
 			- **location**: array with lat long for destination, f. e. `[39.2908045, -76.66135799999999]`.
-			- **location_id**: id of the location. It can be id of the hub, shop. If destination is delivery point then id is the same as order id.
+			- **location_id**: id of the location. It is hub/warehouse id for `type: "start"` and `type: "finish"`, 
+			shop id for `type: "pickup"` and for `type: "delivery"` id is the same as order id.
 			- **address**: address of the location.
 			- **from_time**: the earliest time to arrive to destination, f. e. `"06:00 AM"`. 
 			If driver will arrive to destination earlier than _from_time_ he should wait. 
