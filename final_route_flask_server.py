@@ -27,6 +27,7 @@ def final_route():
     '''
     try:
         locations = []
+        location_ids = []
         time_windows = []
         cold_deliveries = []
         hub_indexes = []
@@ -90,6 +91,7 @@ def final_route():
                 if j == 0:
                     hub = hubs[i]
                     locations.append((hub['latitude'], hub['longitude']))
+                    location_ids.append(hub['hubId'])
                     time_windows.append((hub['fromTime'], hub['toTime']))
                     order_ids.append('')
 
@@ -99,6 +101,7 @@ def final_route():
             order = orders[i]
             order_ids.append(order['orderId'])
             locations.append((order['latitude'], order['longitude']))
+            location_ids.append(order['orderId'])
             time_windows.append((order['fromTime'], order['toTime']))
             if order['isColdDelivery']:
                 # we add i + <hubs size> index because first locations for hubs
@@ -118,7 +121,7 @@ def final_route():
 
         errors = []
         warnings = []
-        result = fr.create_data_model(locations, time_windows, order_ids, shops,
+        result = fr.create_data_model(locations, location_ids, time_windows, order_ids, shops,
                                       cold_deliveries, num_vehicles, hub_indexes)
 
         errors.extend(result.errors)
@@ -146,6 +149,7 @@ def final_route_debug():
 
     # debug, hardcoded values
     locations = hardcoded.locations_hardcoded()
+    location_ids = hardcoded.location_ids_hardcoded()
     time_windows = hardcoded.time_windows_hardcoded()
     shops = hardcoded.shops_hardcoded()
     cold_deliveries = hardcoded.cold_deliveries_hardcoded()
@@ -153,7 +157,7 @@ def final_route_debug():
     num_vehicles = hardcoded.max_vehicles_hardcoded()
     hub_indexes = hardcoded.hubs_hardcoded()
 
-    result = fr.create_data_model(locations, time_windows, order_ids, shops,
+    result = fr.create_data_model(locations, location_ids, time_windows, order_ids, shops,
                                   cold_deliveries, num_vehicles, hub_indexes)
     # result = create_data_model_d()
     if not result.successful:

@@ -174,6 +174,22 @@ def order_ids_hardcoded():
     return order_ids
 
 
+def location_ids_hardcoded():
+    order_ids = [
+        "hub 1",
+        "hub 2",
+        "hub 3",
+        "order 4",
+        "order 5",
+        "order 6",
+        "order 7",
+        "order 8",
+        "order 1",
+        "order 2"
+    ]
+    return order_ids
+
+
 def max_vehicles_hardcoded():
     return 6
 

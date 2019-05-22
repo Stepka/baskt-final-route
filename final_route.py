@@ -38,6 +38,7 @@ class ResultCode:
 
 def add_pickups_for_cold_deliveries(gclient,
                                     locations,
+                                    location_ids,
                                     addresses,
                                     order_ids,
                                     time_windows,
@@ -57,7 +58,7 @@ def add_pickups_for_cold_deliveries(gclient,
     
     loc_length = len(locations)
     warnings = []
-    result = one_hour(gclient, locations, addresses, order_ids, time_windows, types,
+    result = one_hour(gclient, locations, location_ids, addresses, order_ids, time_windows, types,
                       shops_arr, dest_arr, MAX_COLD_DELIVERY_MINUTES)
     warnings.extend(result.warnings)
     if not result.successful:
@@ -69,11 +70,12 @@ def add_pickups_for_cold_deliveries(gclient,
     return ResultCode(True, pickup_deliver, [], warnings)
 
 
-def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes):
+def create_data_model(locations, location_ids, time_windows, order_ids, shops, cold_deliveries, num_vehicles, hub_indexes):
     '''
     Initialize all the variables.
 
     :param locations:
+    :param location_ids:
     :param time_windows:
     :param order_ids:
     :param shops:
@@ -90,6 +92,7 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
 
     data = {}
     data['locations'] = locations
+    data['location_ids'] = location_ids
     data['addresses'] = ['' for _ in locations]
     if len(data['locations'][0]) == 1:
         data['addresses'] = [i[0] for i in locations]
@@ -102,7 +105,8 @@ def create_data_model(locations, time_windows, order_ids, shops, cold_deliveries
     for i in hub_indexes:
         data['types'][i] = 'start'
 
-    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['addresses'], data['order_ids'],
+    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'],
+                                             data['addresses'], data['order_ids'],
                                              data['time_windows'], data['types'], shops, cold_deliveries)
     errors.extend(result.errors)
     warnings.extend(result.warnings)
@@ -326,6 +330,7 @@ def one_hour_dist(gclient,
 
 def one_hour(gclient,
              locations,
+             location_ids,
              addresses,
              order_ids,
              time_windows,
@@ -394,6 +399,7 @@ def one_hour(gclient,
         time_windows.append((lower_bound, upper_bound))
         # locations.append((x_coor, y_coor))
         locations.append((shop['latitude'], shop['longitude']))
+        location_ids.append(shop['shopId'])
         addresses.append(closest)
         order_ids.append(order_ids[i])
         types.append('pickup')
@@ -455,6 +461,7 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
             destination['type'] = data['types'][destination['index']]
             destination['order_id'] = data['order_ids'][destination['index']]
             destination['location'] = data['locations'][destination['index']]
+            destination['location_id'] = data['location_ids'][destination['index']]
             destination['address'] = data['addresses'][destination['index']]
             destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
             destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
@@ -497,6 +504,7 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
         destination['type'] = 'finish'
         destination['order_id'] = data['order_ids'][destination['index']]
         destination['location'] = data['locations'][destination['index']]
+        destination['location_id'] = data['location_ids'][destination['index']]
         destination['address'] = data['addresses'][destination['index']]
         destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
         destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
