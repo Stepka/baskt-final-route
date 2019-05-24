@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import json
+import uuid
 
 import sys
 from ortools.constraint_solver import routing_enums_pb2
@@ -468,6 +469,7 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
     result = {'routes': []}
     for vehicle_id in range(data['num_vehicles']):
         vehicle_route = {}
+        vehicle_route['route_id'] = str(uuid.uuid4())
         vehicle_route['description'] = 'Route for vehicle {}'.format(vehicle_id)
         if 'destinations' in info or 'all' in info:
             vehicle_route['destinations'] = []
