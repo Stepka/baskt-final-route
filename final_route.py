@@ -255,6 +255,46 @@ def func_dist_mat(loc, gclient):
     return ResultCode(True, dist_mat, [], warnings)
 
 
+def func_dist_from_to(sources, destinations, gclient):
+    # Create the distance between locations matrix array.
+
+    sources_index = 0
+    destinations_index = 0
+    sources_sizes = len(sources)
+    destinations_sizes = len(destinations)
+    dist_mat = [0] * sources_sizes
+    warnings = []
+    for from_node in sources:
+        destinations_index = 0
+        dist_mat[sources_index] = [0] * destinations_sizes
+        for to_node in destinations:
+            print("calculate distance... {}/{}, from {} to {}".format(destinations_sizes * sources_index + destinations_index,
+                                                                      destinations_sizes * sources_sizes,
+                                                                      sources_index,
+                                                                      destinations_index))
+            x1 = from_node[0]
+            y1 = from_node[1]
+
+            x2 = to_node[0]
+            y2 = to_node[1]
+
+            result = gmaps_dist(gclient, x1, y1, x2, y2)
+            if not result.successful:
+                # return result
+                # we decide error on this step as warning - just set maximum distance to error point
+                warnings.extend(result.errors)
+                warnings.extend(result.warnings)
+                dist_mat[sources_index][destinations_index] = sys.maxsize
+            else:
+                dist_mat[sources_index][destinations_index] = result.body
+
+            destinations_index += 1
+
+        sources_index += 1
+
+    return ResultCode(True, dist_mat, [], warnings)
+
+
 def gmaps_dist(gclient, x1, y1,
                         x2, y2):
     # Gmaps distance between points
@@ -302,9 +342,10 @@ def get_coordinates(loc, gclient):
 def convert_addresses_to_coordinates(data, gclient):
     size = len(data)
     for i in range(size):
-        if len(data[i]) == 1:
-            x, y = get_coordinates(data[i], gclient)
-            data[i] = (x, y)
+        if ('latitude' not in data[i]) or ('longitude' not in data[i]):
+            x, y = get_coordinates(data[i]['address'], gclient)
+            data[i]['latitude'] = x
+            data[i]['longitude'] = y
 
 
 def get_address(gclient, location):
@@ -699,3 +740,36 @@ def calculate_routes(data_model, with_print=True, info='all'):
     else:
         return ResultCode(False, "", ["no assignment"]), "no assignment"
 
+
+def calculate_locations_in_radius(sources, destinations, radius, info):
+
+    gclient = googlemaps.Client(key='AIzaSyAei-_KeQOTzjN_6sIPuQ3yW4MlRk0MtXk')
+
+    convert_addresses_to_coordinates(sources, gclient)
+    convert_addresses_to_coordinates(destinations, gclient)
+
+    source_locations = []
+    for i in range(len(sources)):
+        source = sources[i]
+        source_locations.append((source['latitude'], source['longitude']))
+
+    destination_locations = []
+    for i in range(len(destinations)):
+        destination = destinations[i]
+        destination_locations.append((destination['latitude'], destination['longitude']))
+
+    result = func_dist_from_to(source_locations, destination_locations, gclient)
+    distances = result.body
+
+    solution = []
+    if 'in_radius' in info or 'all' in info:
+        for i in range(len(distances)):
+            in_radius = []
+            for j in range(len(distances[i])):
+                if distances[i][j] < radius:
+                    destinations[j]['distance'] = distances[i][j]
+                    in_radius.append(destinations[j])
+
+            solution.append({'center': sources[i], 'in_radius': in_radius})
+
+    return ResultCode(True, {'in_radius': solution})

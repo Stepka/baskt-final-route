@@ -5,6 +5,10 @@
 - _final_route_local.py_ is wrapper around _final_route.py_ to run it local with hardcoded data
 ## Usage
 
+---
+
+###final_route
+
 Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route with params encoded as *application/json*
 
 ##### _payload_
@@ -500,6 +504,169 @@ Json with routes description
 For test purposes you can call 
 http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route/debug
 for calculate routes on hardcoded data
+
+---
+
+###show_in_radius
+
+Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/show_in_radius with params encoded as *application/json*
+
+##### _payload_
+
+- **centers** - _Required._  array of location objects **from** which radius will be calculated. 
+Object require an `address` field or a `latitude` and a `longitude` fields. 
+Object consist of:
+    - id - string with id, f. e. `"0b137cb1-1"`.
+    - name - name of the location.
+    - address - address of the location. 
+    If the `latitude` and the `longitude` is omit then API will lookup coordinates by the address. 
+    Example: `"2429 Frederick Ave, Baltimore, MD 21223"`
+    - latitude - coordinate of the location, f. e.`39.3019488`.
+    - longitude - coordinate of the location, f. e. `-76.60290979999999`.
+- **destinations** - _Required._  array of location objects **to** which radius will be calculated. 
+Object require an `address` field or a `latitude` and a `longitude` fields. 
+Object consist of:
+    - id - string with id, f. e. `"0b137cb1-1"`.
+    - name - name of the location.
+    - address - address of the location. 
+    If the `latitude` and the `longitude` is omit then API will lookup coordinates by the address. 
+    Example: `"2429 Frederick Ave, Baltimore, MD 21223"`
+    - latitude - coordinate of the location, f. e.`39.3019488`.
+    - longitude - coordinate of the location, f. e. `-76.60290979999999`.
+- **radius** - _Required._  a number in meters that define radius from center f. e. `4000`.
+- **info** - Define what info should be include to result. Array of strings. 
+You can combine strings in the array. Default is `['all']`. Possible strings are: 
+    - `'all'` - include all info.
+    - `'in_radius'` - include sequence of objects lies in the radius to each center.
+    - `'errors'` - include errors object into the root of response.
+    - `'warnings'` - include warnings object into the root of response.
+    
+##### _result_
+Json with routes description
+- **successful**: if true all is ok.
+- **body**: result.
+	- **in_radius**: an array of objects lies in the radius to each center.
+		- **center**: an object of the center. Has the same structure as object in the `centers` in the `payload`.
+		- **in_radius**: an array of destinations. Each object the same structure as object in the `destinations` in the `payload`. 
+		And has one more field:
+		    - **distance** - distance from the center.
+- **errors**: an array of errors occurred with API call. Each error represented as simple string.
+- **warnings**: an array of warnings occurred with API call. Each warning represented as simple string.
+
+#### Examples
+- **payload**: 
+``` json
+{
+    "centers":[
+        {
+            "id":"hub-1",
+            "name":"hub-1",
+            "latitude":39.2908045,
+            "longitude":-76.66135799999999
+        }, 
+        {
+            "id":"hub-2",
+            "name":"hub-2",
+            "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201"
+        }
+    ],
+    "destinations":[
+        {
+            "id":"id-1",
+            "name":"shop-1",
+            "address":"1000 E Eager St, Baltimore, MD 21202",
+            "latitude":39.3019488,
+            "longitude":-76.60290979999999
+        },
+        {
+            "id":"id-2",
+            "name":"shop-2",
+            "address":"0505011, Baltimore, MD 21201"
+        },
+        {
+            "id":"id-3",
+            "name":"shop-3",
+            "latitude":39.3054756,
+            "longitude":-76.6211893
+        },
+        {
+            "id":"id-4",
+            "name":"shop-4",
+            "address":"2429 Frederick Ave, Baltimore, MD 21223"
+        }
+    ],
+    "radius":4000,
+    "info": ["in_radius", "errors"]
+}
+```
+
+- **result**: 
+``` json
+{
+    "successful": true,
+    "body": {
+        "in_radius": [
+            {
+                "center": {
+                    "id": "hub-1",
+                    "name": "hub-1",
+                    "latitude": 39.2908045,
+                    "longitude": -76.66135799999999
+                },
+                "in_radius": [
+                    {
+                        "id": "id-4",
+                        "name": "shop-4",
+                        "address": "2429 Frederick Ave, Baltimore, MD 21223",
+                        "latitude": 39.2815397,
+                        "longitude": -76.6549007,
+                        "distance": 1397
+                    }
+                ]
+            },
+            {
+                "center": {
+                    "id": "hub-2",
+                    "name": "hub-2",
+                    "address": "Sutton Place, 1111 Park Ave, Baltimore, MD 21201",
+                    "latitude": 39.3054756,
+                    "longitude": -76.6211893
+                },
+                "in_radius": [
+                    {
+                        "id": "id-1",
+                        "name": "shop-1",
+                        "address": "1000 E Eager St, Baltimore, MD 21202",
+                        "latitude": 39.3019488,
+                        "longitude": -76.60290979999999,
+                        "distance": 3040
+                    },
+                    {
+                        "id": "id-2",
+                        "name": "shop-2",
+                        "address": "0505011, Baltimore, MD 21201",
+                        "latitude": 39.2963369,
+                        "longitude": -76.62105389999999,
+                        "distance": 1160
+                    },
+                    {
+                        "id": "id-3",
+                        "name": "shop-3",
+                        "latitude": 39.3054756,
+                        "longitude": -76.6211893,
+                        "distance": 0
+                    }
+                ]
+            }
+        ]
+    },
+    "errors": [],
+    "warnings": []
+}
+```
+
+---
+
 ## Rebuild server
 
 After you have updated code you need to load new code to ec2 instance and rebuild and rerun docker.  

@@ -144,6 +144,49 @@ def final_route():
         return ResultCode(False, "", [error]).as_json_string()
 
 
+@app.route("/show_in_radius", methods=['GET', 'POST'])
+def show_in_radius():
+
+    try:
+        centers = []
+        destinations = []
+        radius = 0
+
+        params_json = request.get_json()
+
+        print("payload:", params_json)
+
+        if 'centers' in params_json:
+            centers = params_json['centers']
+        else:
+            return ResultCode(False, '', ['Missed required parameter "centers"']).as_json_string()
+
+        if 'destinations' in params_json:
+            destinations = params_json['destinations']
+        else:
+            return ResultCode(False, '', ['Missed required parameter "hubs"']).as_json_string()
+
+        if 'radius' in params_json:
+            radius = params_json['radius']
+        else:
+            return ResultCode(False, '', ['Missed required parameter "radius"']).as_json_string()
+
+        if 'info' in params_json:
+            info = params_json['info']
+        else:
+            info = ['all']
+
+        result = fr.calculate_locations_in_radius(centers, destinations, radius, info)
+        return result.as_json_string(info)
+
+    except Exception as ex:
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        traceback.print_tb(exc_traceback, file=sys.stdout)
+        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
+        error = "Exception '{}' caught, details: {}".format(type(ex).__name__, str(ex))
+        return ResultCode(False, "", [error]).as_json_string()
+
+
 @app.route("/final_route/debug")
 def final_route_debug():
 
