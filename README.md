@@ -7,7 +7,7 @@
 
 ---
 
-###final_route
+### final_route
 
 Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route with params encoded as *application/json*
 
@@ -507,7 +507,7 @@ for calculate routes on hardcoded data
 
 ---
 
-###show_in_radius
+### show_in_radius
 
 Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/show_in_radius with params encoded as *application/json*
 
