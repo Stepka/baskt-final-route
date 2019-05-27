@@ -34,7 +34,9 @@ class ResultCode:
             result['errors'] = self.errors
         if 'warnings' in info or 'all' in info:
             result['warnings'] = self.warnings
-        return json.dumps(result)
+
+        str = json.dumps(result)
+        return str.replace('""', '"-"')
 
 
 def add_pickups_for_cold_deliveries(gclient,
