@@ -9,9 +9,7 @@ RUN apt-get install -y python-pip
 RUN pip install --upgrade pip
 
 # Install app dependencies
-RUN pip install --upgrade Flask
-RUN pip install --upgrade --user ortools
-RUN pip install googlemaps
+RUN pip install -r requirements.txt
 
 # Bundle app source
 COPY final_route.py final_route.py
