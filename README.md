@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/Stepka/baskt-final-route.svg?token=DyV2SZK6PimNUq5WZ2JB&branch=master)](https://travis-ci.com/Stepka/baskt-final-route)
+
 - _final_route.py_ is module for calculate routes based on destinations, time window, etc data. Use google OR tools for it. 
 
 - _final_route_flask_server.py_ is Flask server based API for routing. Right now that application is run on _ec2_ in Ohio region, run inside *docker*.
