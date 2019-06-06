@@ -1,5 +1,6 @@
 import json
 
+import requests
 from flask import Flask
 from flask import request
 import final_route as fr
@@ -8,6 +9,7 @@ import hardcoded_routes_data as hardcoded
 import sys
 import optparse
 import traceback
+import googlemaps
 
 
 app = Flask(__name__)
@@ -17,6 +19,14 @@ app = Flask(__name__)
 def check_if_running():
     print("All is ok, server is running!")
     return "All is ok, server is running!"
+
+
+@app.route("/test_osrm")
+def test_osrm():
+    test_request = requests.get(
+        "http://osrm:5000/route/v1/driving/13.388860,52.517037;13.385983,52.496891?steps=true"
+    )
+    return test_request.text
 
 
 @app.route("/final_route", methods=['GET', 'POST'])

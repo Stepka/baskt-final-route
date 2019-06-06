@@ -1,0 +1,30 @@
+version: "3"
+services:
+        osrm:
+                container_name: osrm
+                image: osrm/osrm-backend
+                restart: always
+                ports:
+                        - "5000:5000"
+                volumes:
+                        - ./osrm-data:/data
+                command: "osrm-routed --algorithm mld /data/maryland-latest.osrm"
+                networks:
+                        tsp_network:
+                                aliases:
+                                        - osrm
+        flask-server:
+                container_name: flask-server
+                build: ./flask-server
+                ports:
+                        - "80:5005"
+                volumes:
+                        - ./flask-server:/flask-server
+                networks:
+                        tsp_network:
+                                aliases:
+                                        - flask-server
+
+networks:
+        tsp_network:
+                driver: bridge

@@ -1,5 +1,3 @@
-[![Build Status](https://travis-ci.com/Stepka/baskt-final-route.svg?token=DyV2SZK6PimNUq5WZ2JB&branch=master)](https://travis-ci.com/Stepka/baskt-final-route)
-
 - _final_route.py_ is module for calculate routes based on destinations, time window, etc data. Use google OR tools for it. 
 
 - _final_route_flask_server.py_ is Flask server based API for routing. Right now that application is run on _ec2_ in Ohio region, run inside *docker*.
@@ -11,7 +9,7 @@
 
 ### final_route
 
-Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route with params encoded as *application/json*
+Call http://ec2-54-226-211-140.compute-1.amazonaws.com/final_route with params encoded as *application/json*
 
 ##### _payload_
 
@@ -504,14 +502,14 @@ Json with routes description
 ```
 
 For test purposes you can call 
-http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/final_route/debug
+http://ec2-54-226-211-140.compute-1.amazonaws.com/final_route/debug
 for calculate routes on hardcoded data
 
 ---
 
 ### show_in_radius
 
-Call http://ec2-18-223-44-74.us-east-2.compute.amazonaws.com/show_in_radius with params encoded as *application/json*
+Call http://ec2-54-226-211-140.compute-1.amazonaws.com/show_in_radius with params encoded as *application/json*
 
 ##### _payload_
 
@@ -677,26 +675,7 @@ After you have updated code you need to load new code to ec2 instance and rebuil
 
 Run shell script *rebuild_docker.sh* that remove old container and image and build and run new:
 `sudo sh rebuild_docker.sh`
-
-##### *Case 2*
-
-Or you can do the same as in *Case 1* section manually step by step.
-
-###### Delete All Running and Stopped Containers
-`docker stop $(docker ps -a -q)`
-`docker rm $(docker ps -a -q)`
-
-
-###### Remove all images
-`docker rmi $(docker images -a -q)`
-
-
-###### Build new docker image
-`docker build -t final_route .`
-
-Note, that docker use Dockerfile from current directory (added to sources)
-
-###### Run new docker container with flask app
-`docker run -d -p 80:5000 final_route`
+Then run dockers:
+`docker-compose up -d`
 
 And updated application will run on the previous wrote url.
