@@ -100,8 +100,8 @@ def create_vroom_model(locations, location_ids, time_windows, order_ids, shops, 
     result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'], data['order_ids'],
                                              data['time_windows'], data['types'], shops, cold_deliveries)
 
-    if 'addresses' in info or 'all' in info:
-        data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
+    # if 'addresses' in info or 'all' in info:
+    #     data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
 
     errors.extend(result.errors)
     warnings.extend(result.warnings)
@@ -203,8 +203,8 @@ def create_data_model(locations, location_ids, time_windows, order_ids, shops, c
     result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'], data['order_ids'],
                                              data['time_windows'], data['types'], shops, cold_deliveries)
 
-    if 'addresses' in info or 'all' in info:
-        data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
+    # if 'addresses' in info or 'all' in info:
+    #     data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
 
     errors.extend(result.errors)
     warnings.extend(result.warnings)
@@ -700,8 +700,8 @@ def parse_solution_from_vroom(data, vroom_response, info='all'):
             destination['order_id'] = data['order_ids'][index]
             destination['location'] = data['locations'][index]
             destination['location_id'] = data['location_ids'][index]
-            if 'addresses' in info or 'all' in info:
-                destination['address'] = data['addresses'][index]
+            # if 'addresses' in info or 'all' in info:
+            #     destination['address'] = data['addresses'][index]
 
             from_time = vroom_step['arrival']
             to_time = vroom_step['arrival']
@@ -762,8 +762,8 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
             destination['order_id'] = data['order_ids'][destination['index']]
             destination['location'] = data['locations'][destination['index']]
             destination['location_id'] = data['location_ids'][destination['index']]
-            if 'addresses' in info or 'all' in info:
-                destination['address'] = data['addresses'][destination['index']]
+            # if 'addresses' in info or 'all' in info:
+            #     destination['address'] = data['addresses'][destination['index']]
             destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
             destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
             time_window = data['time_windows'][destination['index']]
@@ -806,8 +806,8 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
         destination['order_id'] = data['order_ids'][destination['index']]
         destination['location'] = data['locations'][destination['index']]
         destination['location_id'] = data['location_ids'][destination['index']]
-        if 'addresses' in info or 'all' in info:
-            destination['address'] = data['addresses'][destination['index']]
+        # if 'addresses' in info or 'all' in info:
+        #     destination['address'] = data['addresses'][destination['index']]
         destination['from_time'] = conv_minutes_to_time(assignment.Min(time_var))
         destination['to_time'] = conv_minutes_to_time(assignment.Max(time_var))
         time_window = data['time_windows'][destination['index']]
