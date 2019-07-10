@@ -37,7 +37,7 @@ Among passed shops routing algo will search the nearest pickup point for cold de
 You can combine strings in the array. Default is `['all']`. Possible strings are: 
     - `'all'` - include all info.
     - `'destinations'` - include sequence of destination objects (coordinates, order info, time info, type, etc) into the routes.
-    - `'addresses'` - algo will additionally call to google maps API for addresses for locations and adds addresses to destinations.
+    - `'addresses'` - `excluded feature for now`. algo will additionally call to google maps API for addresses for locations and adds addresses to destinations.
     - `'coordinates'` - include sequence of coordinates into the routes.
     - `'errors'` - include errors object into the root of response.
     - `'warnings'` - include warnings object into the root of response.
@@ -85,6 +85,7 @@ Json with routes description
 			- **next_destination_duration**: road time to the next destination in `HH:MM` format.
 		- **coordinates**: an array of coordinate pairs of the route points.
 		- **route_duration**: total duration of the route in `HH:MM` format.
+		- **num_orders**: number of orders assigned to the route.
 - **errors**: an array of errors occurred with API call. Each error represented as simple string.
 - **warnings**: an array of warnings occurred with API call. Each warning represented as simple string.
 
@@ -192,7 +193,6 @@ Json with routes description
                             -76.66135799999999
                         ],
                         "location_id":"hub-1",
-                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"09:00 AM",
                         "to_time":"09:00 AM",
                         "time_window":[
@@ -210,7 +210,6 @@ Json with routes description
                             -76.63003789999999
                         ],
                         "location_id":"order-5",
-                        "address":"600 Wyndhurst Ave, Baltimore, MD 21210, USA",
                         "from_time":"09:14 AM",
                         "to_time":"09:14 AM",
                         "time_window":[
@@ -229,7 +228,6 @@ Json with routes description
                             -76.6211893
                         ],
                         "location_id":"order-3",
-                        "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
                         "from_time":"09:28 AM",
                         "to_time":"09:28 AM",
                         "time_window":[
@@ -248,7 +246,6 @@ Json with routes description
                             -76.66135799999999
                         ],
                         "location_id":"hub-1",
-                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"09:36 AM",
                         "to_time":"09:36 AM",
                         "time_window":[
@@ -275,7 +272,8 @@ Json with routes description
                         -76.66135799999999
                     ]
                 ],
-                "route_duration":"0:36"
+                "route_duration":"0:36",
+                "num_orders": 2
             },
             {
                 "description":"Route for vehicle 1",
@@ -289,7 +287,6 @@ Json with routes description
                             -76.66135799999999
                         ],
                         "location_id":"hub-1",
-                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"09:00 AM",
                         "to_time":"09:18 AM",
                         "time_window":[
@@ -307,7 +304,6 @@ Json with routes description
                             -76.6549007
                         ],
                         "location_id":"order-4",
-                        "address":"2429 Frederick Ave, Baltimore, MD 21223, USA",
                         "from_time":"09:03 AM",
                         "to_time":"09:21 AM",
                         "time_window":[
@@ -326,7 +322,6 @@ Json with routes description
                             -76.6211893
                         ],
                         "location_id":"shop-1",
-                        "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
                         "from_time":"09:11 AM",
                         "to_time":"09:29 AM",
                         "time_window":[
@@ -345,7 +340,6 @@ Json with routes description
                             -76.6211893
                         ],
                         "location_id":"shop-1",
-                        "address":"Sutton Place, 1111 Park Ave, Baltimore, MD 21201, USA",
                         "from_time":"09:12 AM",
                         "to_time":"09:30 AM",
                         "time_window":[
@@ -364,7 +358,6 @@ Json with routes description
                             -76.6156373
                         ],
                         "location_id":"order-7",
-                        "address":"338 N Charles St, Baltimore, MD 21201, USA",
                         "from_time":"09:30 AM",
                         "to_time":"10:30 AM",
                         "time_window":[
@@ -383,7 +376,6 @@ Json with routes description
                             -76.61649560000001
                         ],
                         "location_id":"order-2",
-                        "address":"1030 N.Charles Street, 1030 N Charles St, Baltimore, MD 21201, USA",
                         "from_time":"03:00 PM",
                         "to_time":"03:56 PM",
                         "time_window":[
@@ -402,7 +394,6 @@ Json with routes description
                             -76.60290979999999
                         ],
                         "location_id":"order-6",
-                        "address":"1000 E Eager St, Baltimore, MD 21202, USA",
                         "from_time":"03:03 PM",
                         "to_time":"03:59 PM",
                         "time_window":[
@@ -421,7 +412,6 @@ Json with routes description
                             -76.60290979999999
                         ],
                         "location_id":"order-1",
-                        "address":"1000 E Eager St, Baltimore, MD 21202, USA",
                         "from_time":"04:00 PM",
                         "to_time":"04:00 PM",
                         "time_window":[
@@ -440,7 +430,6 @@ Json with routes description
                             -76.66135799999999
                         ],
                         "location_id":"hub-1",
-                        "address":"232 N Franklintown Rd, Baltimore, MD 21223, USA",
                         "from_time":"04:09 PM",
                         "to_time":"04:09 PM",
                         "time_window":[
@@ -487,7 +476,8 @@ Json with routes description
                         -76.66135799999999
                     ]
                 ],
-                "route_duration":"7:09"
+                "route_duration":"7:09",
+                "num_orders": 5
             }
         ]
     },

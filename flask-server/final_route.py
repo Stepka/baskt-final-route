@@ -684,6 +684,7 @@ def parse_solution_from_vroom(data, vroom_response, info='all'):
         if 'coordinates' in info or 'all' in info:
             vehicle_route['coordinates'] = []
 
+        num_orders = 0
         for step_index in range(len(vroom_route['steps'])):
             vroom_step = vroom_route['steps'][step_index]
             destination = {}
@@ -695,6 +696,8 @@ def parse_solution_from_vroom(data, vroom_response, info='all'):
                 index = int(vroom_step['job'])
             # destination['index'] = manager.IndexToNode(index)
             destination['type'] = data['types'][index]
+            if destination['type'] == 'delivery':
+                num_orders += 1
             if vroom_step['type'] == 'end':
                 destination['type'] = 'finish'
             destination['order_id'] = data['order_ids'][index]
@@ -727,6 +730,7 @@ def parse_solution_from_vroom(data, vroom_response, info='all'):
 
         route_duration = vroom_route['duration'] + vroom_route['service'] + vroom_route['waiting_time']
         vehicle_route['route_duration'] = str(timedelta(minutes=int(route_duration/60)))[:-3]
+        vehicle_route['num_orders'] = num_orders
 
         if ('destinations' in vehicle_route and len(vehicle_route['destinations']) > 2) or \
                 ('coordinates' in vehicle_route and len(vehicle_route['coordinates']) > 2):
@@ -754,11 +758,14 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
         start_time = -1
         plan_output = 'Route for vehicle {}:\n'.format(vehicle_id)
 
+        num_orders = 0
         while not routing.IsEnd(index):
             time_var = time_dimension.CumulVar(index)
             destination = {}
             destination['index'] = manager.IndexToNode(index)
             destination['type'] = data['types'][destination['index']]
+            if destination['type'] == 'delivery':
+                num_orders += 1
             destination['order_id'] = data['order_ids'][destination['index']]
             destination['location'] = data['locations'][destination['index']]
             destination['location_id'] = data['location_ids'][destination['index']]
@@ -826,6 +833,7 @@ def parse_solution(data, manager, routing, assignment, with_print, info='all'):
         if with_print:
             vehicle_route['route_string'] = plan_output
         vehicle_route['route_duration'] = str(timedelta(minutes=route_duration))[:-3]
+        vehicle_route['num_orders'] = num_orders
 
         if ('destinations' in vehicle_route and len(vehicle_route['destinations']) > 2) or \
                 ('coordinates' in vehicle_route and len(vehicle_route['coordinates']) > 2):
