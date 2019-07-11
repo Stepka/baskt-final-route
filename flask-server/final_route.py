@@ -16,6 +16,7 @@ from datetime import datetime, date, timedelta
 MAX_COLD_DELIVERY_MINUTES = 60
 MAX_DAY_TIME = 24 * 60
 MAX_ROUTE_DURATION = 4 * 60
+DEBUG = False
 
 
 # Helper class to convert a DynamoDB item to JSON.
@@ -200,17 +201,20 @@ def create_data_model(locations, location_ids, time_windows, order_ids, shops, c
     for i in hub_indexes:
         data['types'][i] = 'start'
 
-    result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'], data['order_ids'],
-                                             data['time_windows'], data['types'], shops, cold_deliveries)
+    if len(cold_deliveries) > 0:
+        result = add_pickups_for_cold_deliveries(gclient, data['locations'], data['location_ids'], data['order_ids'],
+                                                 data['time_windows'], data['types'], shops, cold_deliveries)
 
-    # if 'addresses' in info or 'all' in info:
-    #     data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
+        # if 'addresses' in info or 'all' in info:
+        #     data['addresses'] = convert_coordinates_to_addresses(gclient, locations)
 
-    errors.extend(result.errors)
-    warnings.extend(result.warnings)
-    if not result.successful:
-        return result
-    data['cold_deliveries'] = result.body
+        errors.extend(result.errors)
+        warnings.extend(result.warnings)
+        if not result.successful:
+            return result
+        data['cold_deliveries'] = result.body
+    else:
+        data['cold_deliveries'] = []
 
     print("distance_matrix starts...", len(data['locations']))
 
@@ -354,18 +358,28 @@ def func_dist_mat_osrm(locations):
     # Create the distance between locations matrix array.
     warnings = []
 
-    # osrm_url = "http://router.project-osrm.org/table/v1/driving/"
-    osrm_url = "http://osrm:5000/table/v1/driving/"
+    if DEBUG:
+        osrm_url = "http://router.project-osrm.org/table/v1/driving/"
+    else:
+        osrm_url = "http://osrm:5000/table/v1/driving/"
 
     for loc in locations:
         osrm_url += '{},{};'.format(loc[1], loc[0])
 
-    osrm_url = osrm_url[:-1] + '?annotations=distance'
+    if not DEBUG:
+        osrm_url = osrm_url[:-1] + '?annotations=distance'
+    else:
+        osrm_url = osrm_url[:-1]
+
     tables_request = requests.get(osrm_url)
 
     osrm_response = json.loads(tables_request.text)
+    print(osrm_response)
 
-    dist_mat = osrm_response['distances']
+    if DEBUG:
+        dist_mat = osrm_response['durations']
+    else:
+        dist_mat = osrm_response['distances']
 
     return ResultCode(True, dist_mat, [], warnings)
 
@@ -415,8 +429,10 @@ def func_dist_from_to_osrm(sources, destinations):
 
     warnings = []
 
-    # osrm_url = "http://router.project-osrm.org/table/v1/driving/"
-    osrm_url = "http://osrm:5000/table/v1/driving/"
+    if DEBUG:
+        osrm_url = "http://router.project-osrm.org/table/v1/driving/"
+    else:
+        osrm_url = "http://osrm:5000/table/v1/driving/"
 
     for loc in sources:
         osrm_url += '{},{};'.format(loc[1], loc[0])
@@ -424,9 +440,14 @@ def func_dist_from_to_osrm(sources, destinations):
     for loc in destinations:
         osrm_url += '{},{};'.format(loc[1], loc[0])
 
-    osrm_url = osrm_url[:-1] + '?annotations=distance,duration'
+    if not DEBUG:
+        osrm_url = osrm_url[:-1] + '?annotations=distance,duration'
 
-    osrm_url += '&sources='
+    if DEBUG:
+        osrm_url = osrm_url[:-1] + '?sources='
+    else:
+        osrm_url += '&sources='
+
     for i in range(len(sources)):
         osrm_url += str(i) + ';'
     osrm_url = osrm_url[:-1]
@@ -578,8 +599,13 @@ def one_hour(gclient,
     result = func_dist_from_to_osrm(dest_arr_coords, shops_arr_coords)
     print(result.body)
 
-    duration_matrix = result.body['durations']
-    distance_matrix = result.body['distances']
+    if DEBUG:
+        duration_matrix = result.body['durations']
+        distance_matrix = result.body['durations']
+    else:
+        duration_matrix = result.body['durations']
+        distance_matrix = result.body['distances']
+
     for cold_index in range(len(duration_matrix)):
         i = dest_arr_indexes[cold_index]
         dest = locations[i]
